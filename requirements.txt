@@ -1,0 +1,9 @@
+streamlit
+openai
+pandas
+geopandas[all]   # pulls GDAL/GEOS/PROJ binaries
+altair
+plotly
+folium
+streamlit-folium
+requests
