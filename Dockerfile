@@ -1,7 +1,7 @@
 # --------------------------------------------------------------
 # 1.  Stage 1 – build the image
 # --------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS build
+FROM python:3.11-slim-bookworm AS build
 
 # Keep the container lean: install only what we need
 RUN apt-get update && apt-get install -y --no-install-recommends \
