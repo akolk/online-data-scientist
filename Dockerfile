@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # --------------------------------------------------------------
 # 2.  Stage 2 – runtime image (optional but keeps the image small)
 # --------------------------------------------------------------
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Re‑install the compiled libraries that are required at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
