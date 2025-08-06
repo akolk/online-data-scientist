@@ -22,8 +22,8 @@ FROM python:3.11-slim
 
 # Re‑install the compiled libraries that are required at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgdal32 \
-        libproj22 \
+        libgdal \
+        libproj \
         libgeos-c1v5 \
         && rm -rf /var/lib/apt/lists/*
 
