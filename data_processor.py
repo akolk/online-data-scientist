@@ -93,6 +93,9 @@ def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, 
             while True:
                 batches = reader.next_batches(1)
                 if not batches:
+                    # If the first batch is empty, it means the file has no data (or header only)
+                    if batch_idx == 0:
+                        print(f"Warning: No data found in {source_path}")
                     break
 
                 df = batches[0]

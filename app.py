@@ -11,6 +11,7 @@ import folium
 from streamlit_folium import st_folium
 import polars as pl
 import tempfile
+import shutil
 import data_processor
 
 # ----------------------------------------------------------------------
@@ -144,8 +145,13 @@ with st.sidebar:
                     update_progress
                 )
 
-                st.session_state[file_key] = parquet_files
-                st.success(f"Processed {len(parquet_files)} parquet files.")
+                if not parquet_files:
+                    st.error("No valid data could be extracted from the uploaded file.")
+                    # Clean up since we failed to get data
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                else:
+                    st.session_state[file_key] = parquet_files
+                    st.success(f"Processed {len(parquet_files)} parquet files.")
 
                 # Clear progress bar
                 progress_bar.empty()
@@ -159,7 +165,7 @@ with st.sidebar:
         # If processed, load it into analysis result
         if file_key in st.session_state:
             parquet_files = st.session_state[file_key]
-            if st.button("Load Uploaded Data into Analysis"):
+            if parquet_files and st.button("Load Uploaded Data into Analysis"):
                 # Use LazyFrame to load
                 try:
                     # Scan all parquet files

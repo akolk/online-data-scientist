@@ -83,6 +83,16 @@ You can run the application locally or using Docker.
 
 3.  Access the app at `http://localhost:8501`.
 
+### Option 3: Run on Mac (Apple Silicon) without building
+
+You can pull the pre-built image directly from GitHub Container Registry. This image supports ARM64 (Apple Silicon) natively.
+
+```bash
+docker run -p 8501:8501 \
+  -e OPENAI_API_KEY="your-openai-api-key" \
+  ghcr.io/akolk/online-data-scientist:main
+```
+
 ## ⚙️ Configuration
 
 The application is configured via environment variables:
