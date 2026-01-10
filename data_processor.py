@@ -5,6 +5,20 @@ import shutil
 import polars as pl
 import time
 
+def detect_separator(filename):
+    with open(filename, 'rb') as f:
+        # Read the first few lines to detect separator
+        sample = f.read(2048)
+        if not sample:
+            return ',' # Default
+
+        n_commas = sample.count(b',')
+        n_semicolons = sample.count(b';')
+
+        if n_semicolons > n_commas:
+            return ';'
+        return ','
+
 def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, chunk_size=500000):
     """
     Extracts a zip/gzip file and converts it to Parquet in chunks.
@@ -87,7 +101,8 @@ def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, 
 
     for i, source_path in enumerate(data_files):
         try:
-            reader = pl.read_csv_batched(source_path, ignore_errors=True, batch_size=chunk_size)
+            separator = detect_separator(source_path)
+            reader = pl.read_csv_batched(source_path, ignore_errors=True, batch_size=chunk_size, separator=separator)
 
             batch_idx = 0
             while True:
