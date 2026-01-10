@@ -9,6 +9,9 @@ import altair as alt
 import plotly.express as px
 import folium
 from streamlit_folium import st_folium
+import polars as pl
+import tempfile
+import data_processor
 
 # ----------------------------------------------------------------------
 # 1️⃣  Configuration – read secrets from environment
@@ -92,6 +95,10 @@ def render_analysis(data, data_type="pandas"):
 # 3️⃣  Streamlit UI
 # ----------------------------------------------------------------------
 st.set_page_config(page_title="🧠 Online Data Scientist", layout="wide")
+
+# Progress bar container in the header
+progress_bar_placeholder = st.empty()
+
 st.title("🧠 Online Data Scientist")
 
 # Session state to keep the chat history
@@ -100,6 +107,74 @@ if "chat_history" not in st.session_state:
 
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
+
+# Sidebar for file upload
+with st.sidebar:
+    st.header("Upload Data")
+    uploaded_file = st.file_uploader("Choose a ZIP or GZIP file", type=["zip", "gz", "gzip"])
+
+    if uploaded_file is not None:
+        # Check if already processed to avoid re-processing on every rerun
+        # We use file.file_id or name+size as key.
+        file_key = f"processed_{uploaded_file.name}_{uploaded_file.size}"
+
+        if file_key not in st.session_state:
+            st.info("Processing file...")
+
+            # Progress bar logic
+            progress_bar = progress_bar_placeholder.progress(0, text="Starting extraction...")
+
+            def update_progress(p):
+                # Update the progress bar
+                progress_bar.progress(int(p * 100), text=f"Processing... {int(p*100)}%")
+
+            # Create a temporary directory
+            temp_dir = tempfile.mkdtemp()
+            # Store temp_dir in session state to allow cleanup later if needed
+            if "temp_dirs" not in st.session_state:
+                st.session_state.temp_dirs = []
+            st.session_state.temp_dirs.append(temp_dir)
+
+            try:
+                # Process
+                parquet_files = data_processor.extract_and_convert(
+                    uploaded_file,
+                    uploaded_file.name,
+                    temp_dir,
+                    update_progress
+                )
+
+                st.session_state[file_key] = parquet_files
+                st.success(f"Processed {len(parquet_files)} parquet files.")
+
+                # Clear progress bar
+                progress_bar.empty()
+
+            except Exception as e:
+                st.error(f"Error processing file: {e}")
+                progress_bar.empty()
+                # Clean up on failure
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        # If processed, load it into analysis result
+        if file_key in st.session_state:
+            parquet_files = st.session_state[file_key]
+            if st.button("Load Uploaded Data into Analysis"):
+                # Use LazyFrame to load
+                try:
+                    # Scan all parquet files
+                    lf = pl.scan_parquet(parquet_files)
+
+                    # For rendering, we might need to collect a sample or use a specialized renderer.
+                    # The current render_analysis expects pandas/geopandas.
+                    # We'll collect the head.
+                    df_pandas = lf.limit(1000).collect().to_pandas()
+
+                    st.session_state.analysis_result = {"df": df_pandas, "type": "pandas"}
+                    st.success("Data loaded into Analysis view.")
+                except Exception as e:
+                    st.error(f"Failed to load data: {e}")
+
 
 # Two‑column layout: chat | analysis
 col_chat, col_analysis = st.columns([4, 6])
