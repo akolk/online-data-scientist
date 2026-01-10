@@ -2,7 +2,7 @@ import os
 import json
 import requests
 import streamlit as st
-import openai
+from openai import OpenAI
 import pandas as pd
 import geopandas as gpd
 import altair as alt
@@ -25,14 +25,14 @@ if not OPENAI_API_KEY:
     st.error("❌ `OPENAI_API_KEY` is missing. Please set it in your environment.")
     st.stop()
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ----------------------------------------------------------------------
 # 2️⃣  Helper functions
 # ----------------------------------------------------------------------
 def call_openai_chat(messages, model="gpt-4o-mini", temperature=0.3):
     """Send a list of messages to OpenAI and return the assistant reply."""
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model=model,
         temperature=temperature,
         messages=messages
