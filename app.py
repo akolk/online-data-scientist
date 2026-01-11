@@ -179,7 +179,7 @@ col_chat, col_analysis = st.columns([4, 6])
 with col_chat:
     st.header("Chatbot")
     # Display chat history
-    for entry in st.session_state.chat_history:
+    for i, entry in enumerate(st.session_state.chat_history):
         role = entry["role"].capitalize()
         content = entry["content"]
 
@@ -192,14 +192,17 @@ with col_chat:
                  if content.get("disclaimer"):
                      st.caption(f"Disclaimer: {content['disclaimer']}")
                  if content.get("related"):
-                     st.markdown("Related questions:")
-                     for r in content["related"]:
-                         st.markdown(f"- {r}")
+                     with st.container(border=True):
+                         st.markdown("Related questions:")
+                         for j, r in enumerate(content["related"]):
+                             if st.button(r, key=f"related_{i}_{j}", use_container_width=True):
+                                 st.session_state["user_chat_input"] = r
+                                 st.rerun()
             else:
                 st.markdown(f"**{role}:** {content}")
 
     # Input box
-    user_input = st.chat_input("Ask me about data…")
+    user_input = st.chat_input("Ask me about data…", key="user_chat_input")
 
     if user_input:
         # Save user message
@@ -235,7 +238,7 @@ with col_chat:
         # Call Pydantic AI Agent
         try:
             agent = Agent(
-                'openai:gpt-4o-mini',
+                'openai:gpt-5.2',
                 output_type=AnalysisResponse,
                 system_prompt=system_prompt
             )
