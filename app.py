@@ -14,6 +14,7 @@ from streamlit_folium import st_folium
 import polars as pl
 import tempfile
 import shutil
+import copy
 import data_processor
 
 # ----------------------------------------------------------------------
@@ -40,35 +41,32 @@ def call_openai_chat(messages, model="gpt-4o-mini", temperature=0.3):
     return response.choices[0].message.content.strip(), response.id
 
 
-def render_analysis(data, data_type="pandas"):
+def display_result(result):
     """
-    Render the data in the right column.
-    * `data` can be a pandas.DataFrame or a geopandas.GeoDataFrame.
-    * `data_type` can be 'pandas' or 'geopandas'.
+    Render the result in the right column.
+    Handles DataFrames, Charts, Maps, and text.
     """
-    if data_type == "geopandas" and isinstance(data, gpd.GeoDataFrame):
+    if isinstance(result, (pd.DataFrame, pl.DataFrame)):
+        st.dataframe(result)
+    elif isinstance(result, (alt.Chart,)):
+        st.altair_chart(result, use_container_width=True)
+    elif hasattr(result, "show") and hasattr(result, "to_dict"):
+        # Heuristic for Plotly figures
+        st.plotly_chart(result, use_container_width=True)
+    elif isinstance(result, (folium.Map, folium.Figure)):
+         st_folium(result, width=700)
+    elif isinstance(result, gpd.GeoDataFrame):
         # Simple folium map – show centroids
-        m = folium.Map(location=[data.geometry.y.mean(), data.geometry.x.mean()],
-                       zoom_start=5)
-        for _, row in data.iterrows():
-            folium.GeoJson(row.geometry).add_to(m)
-        st_folium(m, width=700)
-    elif isinstance(data, pd.DataFrame):
-        # Show table
-        st.dataframe(data.head(20))
-        # Try to plot the first two numeric columns
-        numeric_cols = data.select_dtypes(include="number").columns.tolist()
-        if len(numeric_cols) >= 2:
-            chart = alt.Chart(data).mark_point().encode(
-                x=numeric_cols[0],
-                y=numeric_cols[1]
-            ).interactive()
-            st.altair_chart(chart, use_container_width=True)
-        elif len(numeric_cols) == 1:
-            chart = px.line(data, y=numeric_cols[0])
-            st.plotly_chart(chart, use_container_width=True)
+        if not result.empty and result.geometry.notnull().any():
+             m = folium.Map(location=[result.geometry.y.mean(), result.geometry.x.mean()],
+                            zoom_start=5)
+             for _, row in result.iterrows():
+                 if row.geometry:
+                     folium.GeoJson(row.geometry).add_to(m)
+             st_folium(m, width=700)
+        st.dataframe(result)
     else:
-        st.write("No renderable data available.")
+        st.write(result)
 
 
 # ----------------------------------------------------------------------
@@ -85,8 +83,8 @@ st.title("🧠 Online Data Scientist")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-if "analysis_result" not in st.session_state:
-    st.session_state.analysis_result = None
+if "last_run_result" not in st.session_state:
+    st.session_state.last_run_result = None
 
 # Sidebar for file upload
 with st.sidebar:
@@ -158,7 +156,7 @@ with st.sidebar:
                     # We'll collect the head.
                     df_pandas = lf.limit(1000).collect().to_pandas()
 
-                    st.session_state.analysis_result = {"df": df_pandas, "type": "pandas"}
+                    st.session_state.last_run_result = df_pandas
                     st.success("Data loaded into Analysis view.")
                 except Exception as e:
                     st.error(f"Failed to load data: {e}")
@@ -205,7 +203,7 @@ with col_chat:
             "The code will be executed in the main thread. "
             "Always store the result of your analysis in a variable named `result`. "
             "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
-            "Print any intermediate textual results using `print()`."
+            "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
         )
 
         # Check for active uploaded file
@@ -244,27 +242,13 @@ with col_chat:
             for code in code_blocks:
                 code = code.strip()
                 # Execute code
-                # Setup context
-                # Use a thread-safe way to capture print output
-                output_buffer = io.StringIO()
-                def safe_print(*args, **kwargs):
-                    print(*args, file=output_buffer, **kwargs)
-
-                local_scope = {}
+                global_variables = {}
 
                 try:
-                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'folium': folium, 'print': safe_print}, local_scope)
-                    output = output_buffer.getvalue()
-                    if output:
-                        st.session_state.chat_history.append({"role": "system", "content": f"Output:\n```\n{output}\n```"})
+                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'folium': folium}, global_variables)
 
-                    if 'result' in local_scope:
-                        result_val = local_scope['result']
-                        st.session_state.chat_history.append({
-                            "role": "system",
-                            "content": result_val,
-                            "type": "result_object"
-                        })
+                    if 'result' in global_variables:
+                        st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
 
                 except Exception as e:
                     st.error(f"Error executing code: {e}")
@@ -273,10 +257,7 @@ with col_chat:
 # ---- Analysis panel ----
 with col_analysis:
     st.header("Analysis")
-    if st.session_state.analysis_result:
-        render_analysis(
-            st.session_state.analysis_result["df"],
-            st.session_state.analysis_result["type"]
-        )
+    if st.session_state.last_run_result is not None:
+        display_result(st.session_state.last_run_result)
     else:
         st.write("Ask a question that requires data and the assistant will fetch & show it here.")
