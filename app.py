@@ -3,6 +3,7 @@ import json
 import re
 import sys
 import io
+import hashlib
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -105,9 +106,35 @@ with st.sidebar:
         # Check if already processed to avoid re-processing on every rerun
         # We use a composite key based on all files.
         sorted_files = sorted(uploaded_files, key=lambda f: f.name)
-        file_key = "processed_" + "_".join([f"{f.name}_{f.size}" for f in sorted_files])
 
-        if file_key not in st.session_state:
+        # Create a safe file key for directory name
+        raw_key = "_".join([f"{f.name}_{f.size}" for f in sorted_files])
+        # Sanitize to be safe for filesystem
+        safe_key = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_key)
+        if len(safe_key) > 200:
+            safe_key = hashlib.md5(raw_key.encode()).hexdigest()
+        file_key = f"processed_{safe_key}"
+
+        # Determine persistent storage location
+        DATA_DIR = "/data"
+        if not os.path.exists(DATA_DIR) or not os.access(DATA_DIR, os.W_OK):
+            DATA_DIR = os.path.join(os.getcwd(), "data")
+            os.makedirs(DATA_DIR, exist_ok=True)
+
+        file_dir = os.path.join(DATA_DIR, file_key)
+
+        # Check if files already exist in persistent storage
+        existing_parquet = []
+        if os.path.exists(file_dir) and os.path.isdir(file_dir):
+            existing_parquet = [os.path.join(file_dir, f) for f in os.listdir(file_dir) if f.endswith('.parquet')]
+
+        if existing_parquet and file_key not in st.session_state:
+            st.session_state[file_key] = existing_parquet
+            dataset_info = data_processor.get_dataset_info(existing_parquet)
+            st.session_state[f"{file_key}_info"] = dataset_info
+            st.success(f"Loaded {len(existing_parquet)} parquet files from storage.")
+
+        elif file_key not in st.session_state:
             st.info("Processing files...")
 
             # Progress bar logic
@@ -123,12 +150,12 @@ with st.sidebar:
                     progress_bar.progress(int(global_p * 100), text=f"Processing file {file_index+1}/{total_files}... {int(global_p*100)}%")
                 return update_progress
 
-            # Create a temporary directory
-            temp_dir = tempfile.mkdtemp()
-            # Store temp_dir in session state to allow cleanup later if needed
-            if "temp_dirs" not in st.session_state:
-                st.session_state.temp_dirs = []
-            st.session_state.temp_dirs.append(temp_dir)
+            # Create/Use the persistent directory
+            temp_dir = file_dir
+            # If it exists but we are here, it means no parquet files were found or partial state. Clean up.
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
 
             try:
                 all_parquet_files = []
@@ -165,6 +192,9 @@ with st.sidebar:
         # If processed, load it into analysis result
         if file_key in st.session_state:
             parquet_files = st.session_state[file_key]
+
+            st.write(f"Partitions: {len(parquet_files)}")
+
             if parquet_files and st.button("Load Uploaded Data into Analysis"):
                 # Use LazyFrame to load
                 try:
