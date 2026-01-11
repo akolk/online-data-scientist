@@ -75,6 +75,7 @@ You can run the application locally or using Docker.
     Replace the placeholder values with your actual keys and endpoint.
     ```bash
     docker run -p 8501:8501 \
+      -v $(pwd)/data:/data \
       -e OPENAI_API_KEY="your-openai-api-key" \
       -e MCP_ENDPOINT="https://api.your-mcp-server.com/v1" \
       -e MCP_API_KEY="your-mcp-api-key" \
@@ -89,6 +90,7 @@ You can pull the pre-built image directly from GitHub Container Registry. This i
 
 ```bash
 docker run -p 8501:8501 \
+  -v $(pwd)/data:/data \
   -e OPENAI_API_KEY="your-openai-api-key" \
   ghcr.io/akolk/online-data-scientist:main
 ```
