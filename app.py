@@ -4,7 +4,6 @@ import re
 import sys
 import io
 import streamlit as st
-from openai import OpenAI
 import pandas as pd
 import geopandas as gpd
 import altair as alt
@@ -16,6 +15,9 @@ import tempfile
 import shutil
 import copy
 import data_processor
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent
+from typing import List, Optional
 
 # ----------------------------------------------------------------------
 # 1️⃣  Configuration – read secrets from environment
@@ -26,20 +28,28 @@ if not OPENAI_API_KEY:
     st.error("❌ `OPENAI_API_KEY` is missing. Please set it in your environment.")
     st.stop()
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+class AnalysisResponse(BaseModel):
+    answer: str = Field(
+        ...,
+        description="Short description of the results or why the request cannot be fulfilled."
+    )
+    related: List[str] = Field(
+        ...,
+        max_length=2,
+        description="2 SHORT related follow-up USER question suggestions a USER may ask."
+    )
+    code: Optional[str] = Field(
+        default=None,
+        description="Complete, runnable Python script (no backticks) that assigns the final output to `result`."
+    )
+    disclaimer: Optional[str] = Field(
+        default=None,
+        description="Short disclaimer about data quality, limitations if applicable and urls of datasets used."
+    )
 
 # ----------------------------------------------------------------------
 # 2️⃣  Helper functions
 # ----------------------------------------------------------------------
-def call_openai_chat(messages, model="gpt-4o-mini", temperature=0.3):
-    """Send a list of messages to OpenAI and return the assistant reply."""
-    response = client.chat.completions.create(
-        model=model,
-        temperature=temperature,
-        messages=messages
-    )
-    return response.choices[0].message.content.strip(), response.id
-
 
 def display_result(result):
     """
@@ -171,26 +181,27 @@ with col_chat:
     # Display chat history
     for entry in st.session_state.chat_history:
         role = entry["role"].capitalize()
-        if entry.get("type") == "result_object":
-            content = entry["content"]
-            st.markdown(f"**{role}:**")
-            if isinstance(content, (pd.DataFrame, pl.DataFrame)):
-                st.dataframe(content)
-            elif isinstance(content, (alt.Chart,)):
-                st.altair_chart(content, use_container_width=True)
-            elif hasattr(content, "show") and hasattr(content, "to_dict"):
-                # Heuristic for Plotly figures
-                st.plotly_chart(content, use_container_width=True)
-            elif isinstance(content, (folium.Map, folium.Figure)):
-                 st_folium(content, width=700)
+        content = entry["content"]
+
+        if role == "User":
+             st.markdown(f"**{role}:** {content}")
+        elif role == "Assistant":
+            if isinstance(content, dict): # AnalysisResponse serialized or dict
+                 st.markdown(f"**{role}:**")
+                 st.write(content.get("answer", ""))
+                 if content.get("disclaimer"):
+                     st.caption(f"Disclaimer: {content['disclaimer']}")
+                 if content.get("related"):
+                     st.markdown("Related questions:")
+                     for r in content["related"]:
+                         st.markdown(f"- {r}")
             else:
-                st.write(content)
-        else:
-            st.markdown(f"**{role}:** {entry['content']}")
+                st.markdown(f"**{role}:** {content}")
 
     # Input box
-    user_input = st.text_input("You:", key="user_input", placeholder="Ask me about data…")
-    if st.button("Send", key="send_btn") and user_input:
+    user_input = st.chat_input("Ask me about data…")
+
+    if user_input:
         # Save user message
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
@@ -198,7 +209,6 @@ with col_chat:
         system_prompt = (
             "You are an assistant that helps data scientists. "
             "Write Python code to answer the user's questions. "
-            "Wrap the code in ```python ... ``` blocks. "
             "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `altair` (as `alt`), `plotly.express` (as `px`), `folium`, and `streamlit` (as `st`). "
             "The code will be executed in the main thread. "
             "Always store the result of your analysis in a variable named `result`. "
@@ -222,25 +232,27 @@ with col_chat:
                 f"The parquet files are located at: {active_parquet_files}\n"
             )
 
-        # Call OpenAI
-        assistant_reply, response_id = call_openai_chat(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input}
-            ]
-        )
+        # Call Pydantic AI Agent
+        try:
+            agent = Agent(
+                'openai:gpt-4o-mini',
+                result_type=AnalysisResponse,
+                system_prompt=system_prompt
+            )
 
-        st.session_state.chat_history.append({
-            "role": "assistant",
-            "content": assistant_reply,
-            "id": response_id
-        })
+            # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
+            # or mixed contexts, but st.chat_input triggers rerun.
+            result = agent.run_sync(user_input)
+            response_data = result.data
 
-        # Check for code blocks and execute them
-        code_blocks = re.findall(r"```python(.*?)```", assistant_reply, re.DOTALL)
-        if code_blocks:
-            for code in code_blocks:
-                code = code.strip()
+            st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": response_data.model_dump()
+            })
+
+            # Check for code blocks and execute them
+            if response_data.code:
+                code = response_data.code.strip()
                 # Execute code
                 global_variables = {}
 
@@ -249,10 +261,17 @@ with col_chat:
 
                     if 'result' in global_variables:
                         st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
-
                 except Exception as e:
                     st.error(f"Error executing code: {e}")
-                    st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
+                    # We might want to add error to history, or just show ephemeral error
+                    # st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
+
+            # Force a rerun to display the new message immediately if not automatic
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Error calling assistant: {e}")
+
 
 # ---- Analysis panel ----
 with col_analysis:
