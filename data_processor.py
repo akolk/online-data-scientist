@@ -100,7 +100,15 @@ def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, 
                     if progress_callback: progress_callback(0.25)
 
             extracted_files.append(target_path)
+
+        elif filename.endswith('.csv'):
+            target_path = os.path.join(output_dir, filename)
+            with open(target_path, "wb") as target:
+                target.write(file_obj.read())
+            extracted_files.append(target_path)
+
         else:
+            # Fallback for other files, assuming they are readable as text/csv
             target_path = os.path.join(output_dir, filename)
             with open(target_path, "wb") as target:
                 target.write(file_obj.read())
