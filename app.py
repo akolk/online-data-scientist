@@ -264,7 +264,9 @@ with col_chat:
 
                 try:
                     exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
-
+                    print(type(global_variables['result']))
+                    print(global_variables['result'])
+                          
                     if 'result' in global_variables:
                         st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
                 except Exception as e:
