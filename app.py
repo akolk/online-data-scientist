@@ -236,7 +236,7 @@ with col_chat:
         try:
             agent = Agent(
                 'openai:gpt-4o-mini',
-                result_type=AnalysisResponse,
+                output_type=AnalysisResponse,
                 system_prompt=system_prompt
             )
 
