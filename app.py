@@ -60,9 +60,9 @@ def display_result(result):
     if isinstance(result, (pd.DataFrame, pl.DataFrame)):
         st.dataframe(result)
     elif isinstance(result, (alt.Chart,)):
-        st.altair_chart(result, use_container_width=True)
+        st.altair_chart(result, width="stretch")
     elif isinstance(result, go.Figure):
-        st.plotly_chart(result, use_container_width=True)
+        st.plotly_chart(result, width="stretch")
     elif isinstance(result, (folium.Map, folium.Figure)):
          st_folium(result, width=700)
     elif isinstance(result, gpd.GeoDataFrame):
@@ -195,7 +195,7 @@ with col_chat:
                      with st.container(border=True):
                          st.markdown("Related questions:")
                          for j, r in enumerate(content["related"]):
-                             if st.button(r, key=f"related_{i}_{j}", use_container_width=True):
+                             if st.button(r, key=f"related_{i}_{j}", width="stretch"):
                                  st.session_state["user_chat_input"] = r
                                  st.rerun()
             else:

@@ -13,7 +13,7 @@ for i, entry in enumerate(st.session_state.chat_history):
         with st.container(border=True):
             st.markdown("Related questions:")
             for j, r in enumerate(content["related"]):
-                if st.button(r, key=f"related_{i}_{j}", use_container_width=True):
+                if st.button(r, key=f"related_{i}_{j}", width="stretch"):
                     st.session_state["my_chat_input"] = r
                     st.rerun()
 
