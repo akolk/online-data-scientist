@@ -243,7 +243,7 @@ with col_chat:
             # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
             # or mixed contexts, but st.chat_input triggers rerun.
             result = agent.run_sync(user_input)
-            response_data = result.data
+            response_data = result.output
 
             st.session_state.chat_history.append({
                 "role": "assistant",
