@@ -275,11 +275,11 @@ with col_chat:
 
                 try:
                     exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
-                    print(type(global_variables['result']))
-                    print(global_variables['result'])
                           
                     if 'result' in global_variables:
                         st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
+                    else:
+                        st.error("The generated code did not produce a 'result' variable.")
                 except Exception as e:
                     st.error(f"Error executing code: {e}")
                     # We might want to add error to history, or just show ephemeral error
@@ -296,6 +296,9 @@ with col_chat:
 with col_analysis:
     st.header("Analysis")
     if st.session_state.last_run_result is not None:
-        display_result(st.session_state.last_run_result)
+        try:
+            display_result(st.session_state.last_run_result)
+        except Exception as e:
+            st.error(f"Error displaying result: {e}")
     else:
         st.write("Ask a question that requires data and the assistant will fetch & show it here.")
