@@ -19,6 +19,24 @@ def detect_separator(filename):
             return ';'
         return ','
 
+def get_dataset_info(parquet_files):
+    """
+    Returns metadata about the dataset (schema, row count estimate from first file).
+    Assumes all parquet files belong to the same dataset or at least shares the schema of the first one.
+    """
+    if not parquet_files:
+        return "No data available."
+
+    try:
+        # We'll just look at the first file for schema
+        lf = pl.scan_parquet(parquet_files[0])
+        schema = lf.collect_schema()
+        schema_str = ", ".join([f"{k} ({v})" for k, v in schema.items()])
+
+        return f"Schema: {schema_str}"
+    except Exception as e:
+        return f"Error reading schema: {e}"
+
 def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, chunk_size=500000):
     """
     Extracts a zip/gzip file and converts it to Parquet in chunks.
