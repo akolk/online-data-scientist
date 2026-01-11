@@ -89,8 +89,6 @@ st.set_page_config(page_title="🧠 Online Data Scientist", layout="wide")
 # Progress bar container in the header
 progress_bar_placeholder = st.empty()
 
-st.title("🧠 Online Data Scientist")
-
 # Session state to keep the chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
