@@ -101,22 +101,29 @@ if "last_run_result" not in st.session_state:
 # Sidebar for file upload
 with st.sidebar:
     st.header("Upload Data")
-    uploaded_file = st.file_uploader("Choose a ZIP or GZIP file", type=["zip", "gz", "gzip"])
+    uploaded_files = st.file_uploader("Choose CSV, ZIP or GZIP files", type=["csv", "zip", "gz", "gzip"], accept_multiple_files=True)
 
-    if uploaded_file is not None:
+    if uploaded_files:
         # Check if already processed to avoid re-processing on every rerun
-        # We use file.file_id or name+size as key.
-        file_key = f"processed_{uploaded_file.name}_{uploaded_file.size}"
+        # We use a composite key based on all files.
+        sorted_files = sorted(uploaded_files, key=lambda f: f.name)
+        file_key = "processed_" + "_".join([f"{f.name}_{f.size}" for f in sorted_files])
 
         if file_key not in st.session_state:
-            st.info("Processing file...")
+            st.info("Processing files...")
 
             # Progress bar logic
             progress_bar = progress_bar_placeholder.progress(0, text="Starting extraction...")
 
-            def update_progress(p):
-                # Update the progress bar
-                progress_bar.progress(int(p * 100), text=f"Processing... {int(p*100)}%")
+            total_files = len(sorted_files)
+
+            def make_progress_callback(file_index):
+                def update_progress(p):
+                    # p is 0.0 to 1.0 for the current file
+                    # Global progress = (file_index + p) / total_files
+                    global_p = (file_index + p) / total_files
+                    progress_bar.progress(int(global_p * 100), text=f"Processing file {file_index+1}/{total_files}... {int(global_p*100)}%")
+                return update_progress
 
             # Create a temporary directory
             temp_dir = tempfile.mkdtemp()
@@ -126,30 +133,33 @@ with st.sidebar:
             st.session_state.temp_dirs.append(temp_dir)
 
             try:
-                # Process
-                parquet_files = data_processor.extract_and_convert(
-                    uploaded_file,
-                    uploaded_file.name,
-                    temp_dir,
-                    update_progress
-                )
+                all_parquet_files = []
+                for i, file_obj in enumerate(sorted_files):
+                    # Process
+                    parquet_files = data_processor.extract_and_convert(
+                        file_obj,
+                        file_obj.name,
+                        temp_dir,
+                        make_progress_callback(i)
+                    )
+                    all_parquet_files.extend(parquet_files)
 
-                if not parquet_files:
-                    st.error("No valid data could be extracted from the uploaded file.")
+                if not all_parquet_files:
+                    st.error("No valid data could be extracted from the uploaded files.")
                     # Clean up since we failed to get data
                     shutil.rmtree(temp_dir, ignore_errors=True)
                 else:
-                    st.session_state[file_key] = parquet_files
+                    st.session_state[file_key] = all_parquet_files
                     # Extract metadata
-                    dataset_info = data_processor.get_dataset_info(parquet_files)
+                    dataset_info = data_processor.get_dataset_info(all_parquet_files)
                     st.session_state[f"{file_key}_info"] = dataset_info
-                    st.success(f"Processed {len(parquet_files)} parquet files.")
+                    st.success(f"Processed {len(all_parquet_files)} parquet files.")
 
                 # Clear progress bar
                 progress_bar.empty()
 
             except Exception as e:
-                st.error(f"Error processing file: {e}")
+                st.error(f"Error processing files: {e}")
                 progress_bar.empty()
                 # Clean up on failure
                 shutil.rmtree(temp_dir, ignore_errors=True)
@@ -222,11 +232,12 @@ with col_chat:
             "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
         )
 
-        # Check for active uploaded file
+        # Check for active uploaded files
         active_dataset_info = ""
         active_parquet_files = []
-        if uploaded_file:
-             fk = f"processed_{uploaded_file.name}_{uploaded_file.size}"
+        if uploaded_files:
+             sorted_files = sorted(uploaded_files, key=lambda f: f.name)
+             fk = "processed_" + "_".join([f"{f.name}_{f.size}" for f in sorted_files])
              if fk in st.session_state:
                  active_dataset_info = st.session_state.get(f"{fk}_info", "")
                  active_parquet_files = st.session_state.get(fk, [])
