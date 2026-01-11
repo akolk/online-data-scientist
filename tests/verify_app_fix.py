@@ -48,7 +48,8 @@ class TestAppOpenAIMigration(unittest.TestCase):
 
         # Assert
         # Check if the response is what we expect
-        self.assertEqual(response_content, "Hello there!")
+        self.assertIsInstance(response_content, tuple)
+        self.assertEqual(response_content[0], "Hello there!")
 
         # Verify that the new API method was called
         app.client.chat.completions.create.assert_called_once()

@@ -37,7 +37,7 @@ def call_openai_chat(messages, model="gpt-4o-mini", temperature=0.3):
         temperature=temperature,
         messages=messages
     )
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message.content.strip(), response.id
 
 
 def fetch_from_mcp(query_dict):
@@ -210,14 +210,18 @@ with col_chat:
         )
 
         # Call OpenAI
-        assistant_reply = call_openai_chat(
+        assistant_reply, response_id = call_openai_chat(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
             ]
         )
 
-        st.session_state.chat_history.append({"role": "assistant", "content": assistant_reply})
+        st.session_state.chat_history.append({
+            "role": "assistant",
+            "content": assistant_reply,
+            "id": response_id
+        })
 
         # ---------- Try to parse JSON request ----------
         try:
