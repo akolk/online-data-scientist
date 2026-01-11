@@ -1,6 +1,9 @@
 import os
 import json
 import requests
+import re
+import sys
+import io
 import streamlit as st
 from openai import OpenAI
 import pandas as pd
@@ -151,6 +154,9 @@ with st.sidebar:
                     shutil.rmtree(temp_dir, ignore_errors=True)
                 else:
                     st.session_state[file_key] = parquet_files
+                    # Extract metadata
+                    dataset_info = data_processor.get_dataset_info(parquet_files)
+                    st.session_state[f"{file_key}_info"] = dataset_info
                     st.success(f"Processed {len(parquet_files)} parquet files.")
 
                 # Clear progress bar
@@ -206,8 +212,30 @@ with col_chat:
             "the following fields (if data is needed):\n"
             "- `fetch`: object with `endpoint` (string) and optional `params` (object)\n"
             "- `description`: human‑readable explanation of what the data represents.\n"
-            "If no data is required, just give a normal answer."
+            "If no data is required, just give a normal answer.\n\n"
         )
+
+        # Check for active uploaded file
+        active_dataset_info = ""
+        active_parquet_files = []
+        if uploaded_file:
+             fk = f"processed_{uploaded_file.name}_{uploaded_file.size}"
+             if fk in st.session_state:
+                 active_dataset_info = st.session_state.get(f"{fk}_info", "")
+                 active_parquet_files = st.session_state.get(fk, [])
+
+        if active_parquet_files:
+            system_prompt += (
+                "You also have access to an uploaded dataset. "
+                f"The metadata is: {active_dataset_info}\n"
+                f"The parquet files are located at: {active_parquet_files}\n"
+                "If the user asks a question about this data, write Python code to analyze it. "
+                "Wrap the code in ```python ... ``` blocks. "
+                "You can use `polars` (as `pl`) or `pandas` (as `pd`). "
+                "The code will be executed in the main thread. "
+                "If you generate a dataframe that should be displayed to the user, assign it to the variable `output_df` (pandas or polars DataFrame). "
+                "Print any textual results."
+            )
 
         # Call OpenAI
         assistant_reply, response_id = call_openai_chat(
@@ -247,7 +275,40 @@ with col_chat:
                 st.error(f"❌ Data fetch failed: {e}")
 
         else:
-            st.session_state.analysis_result = None
+            # Check for code blocks and execute them
+            code_blocks = re.findall(r"```python(.*?)```", assistant_reply, re.DOTALL)
+            if code_blocks:
+                for code in code_blocks:
+                    code = code.strip()
+                    # Execute code
+                    # Setup context
+                    # Use a thread-safe way to capture print output
+                    output_buffer = io.StringIO()
+                    def safe_print(*args, **kwargs):
+                        print(*args, file=output_buffer, **kwargs)
+
+                    local_scope = {}
+
+                    try:
+                        exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'print': safe_print}, local_scope)
+                        output = output_buffer.getvalue()
+                        if output:
+                            st.session_state.chat_history.append({"role": "system", "content": f"Output:\n```\n{output}\n```"})
+
+                        if 'output_df' in local_scope:
+                            odf = local_scope['output_df']
+                            # Check type and convert if necessary
+                            if isinstance(odf, pl.DataFrame):
+                                odf = odf.to_pandas()
+
+                            st.session_state.analysis_result = {"df": odf, "type": "pandas"}
+                            st.success("Analysis result updated.")
+
+                    except Exception as e:
+                        st.error(f"Error executing code: {e}")
+                        st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
+            else:
+                st.session_state.analysis_result = None
 
 # ---- Analysis panel ----
 with col_analysis:
