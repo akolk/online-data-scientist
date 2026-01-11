@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 import re
 import sys
 import io
@@ -21,8 +20,6 @@ import data_processor
 # 1️⃣  Configuration – read secrets from environment
 # ----------------------------------------------------------------------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MCP_ENDPOINT   = os.getenv("MCP_ENDPOINT")      # e.g. https://api.my-mcp.com/v1
-MCP_API_KEY    = os.getenv("MCP_API_KEY", "")   # optional
 
 if not OPENAI_API_KEY:
     st.error("❌ `OPENAI_API_KEY` is missing. Please set it in your environment.")
@@ -41,27 +38,6 @@ def call_openai_chat(messages, model="gpt-4o-mini", temperature=0.3):
         messages=messages
     )
     return response.choices[0].message.content.strip(), response.id
-
-
-def fetch_from_mcp(query_dict):
-    """
-    Send a request to the MCP server.
-    The query_dict should contain at least:
-        - endpoint : str  (e.g. "/datasets/US_GDP")
-        - params   : dict (query parameters)
-    """
-    url = f"{MCP_ENDPOINT}{query_dict['endpoint']}"
-    headers = {"Authorization": f"Bearer {MCP_API_KEY}"} if MCP_API_KEY else {}
-    resp = requests.get(url, headers=headers, params=query_dict.get("params", {}))
-    resp.raise_for_status()
-    content_type = resp.headers.get("Content-Type", "")
-    if "application/json" in content_type:
-        return resp.json()
-    elif "text/csv" in content_type or ".csv" in url:
-        return pd.read_csv(pd.compat.StringIO(resp.text))
-    else:
-        # fallback – try to interpret as CSV
-        return pd.read_csv(pd.compat.StringIO(resp.text))
 
 
 def render_analysis(data, data_type="pandas"):
@@ -197,7 +173,22 @@ with col_chat:
     # Display chat history
     for entry in st.session_state.chat_history:
         role = entry["role"].capitalize()
-        st.markdown(f"**{role}:** {entry['content']}")
+        if entry.get("type") == "result_object":
+            content = entry["content"]
+            st.markdown(f"**{role}:**")
+            if isinstance(content, (pd.DataFrame, pl.DataFrame)):
+                st.dataframe(content)
+            elif isinstance(content, (alt.Chart,)):
+                st.altair_chart(content, use_container_width=True)
+            elif hasattr(content, "show") and hasattr(content, "to_dict"):
+                # Heuristic for Plotly figures
+                st.plotly_chart(content, use_container_width=True)
+            elif isinstance(content, (folium.Map, folium.Figure)):
+                 st_folium(content, width=700)
+            else:
+                st.write(content)
+        else:
+            st.markdown(f"**{role}:** {entry['content']}")
 
     # Input box
     user_input = st.text_input("You:", key="user_input", placeholder="Ask me about data…")
@@ -205,14 +196,16 @@ with col_chat:
         # Save user message
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-        # Build system prompt that tells the assistant to output a *JSON plan* if data is needed.
+        # Build system prompt that tells the assistant to output Python code.
         system_prompt = (
             "You are an assistant that helps data scientists. "
-            "When a user asks for data, respond with a JSON object that contains "
-            "the following fields (if data is needed):\n"
-            "- `fetch`: object with `endpoint` (string) and optional `params` (object)\n"
-            "- `description`: human‑readable explanation of what the data represents.\n"
-            "If no data is required, just give a normal answer.\n\n"
+            "Write Python code to answer the user's questions. "
+            "Wrap the code in ```python ... ``` blocks. "
+            "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `altair` (as `alt`), `plotly.express` (as `px`), `folium`, and `streamlit` (as `st`). "
+            "The code will be executed in the main thread. "
+            "Always store the result of your analysis in a variable named `result`. "
+            "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
+            "Print any intermediate textual results using `print()`."
         )
 
         # Check for active uploaded file
@@ -226,15 +219,9 @@ with col_chat:
 
         if active_parquet_files:
             system_prompt += (
-                "You also have access to an uploaded dataset. "
+                "\nYou also have access to an uploaded dataset. "
                 f"The metadata is: {active_dataset_info}\n"
                 f"The parquet files are located at: {active_parquet_files}\n"
-                "If the user asks a question about this data, write Python code to analyze it. "
-                "Wrap the code in ```python ... ``` blocks. "
-                "You can use `polars` (as `pl`) or `pandas` (as `pd`). "
-                "The code will be executed in the main thread. "
-                "If you generate a dataframe that should be displayed to the user, assign it to the variable `output_df` (pandas or polars DataFrame). "
-                "Print any textual results."
             )
 
         # Call OpenAI
@@ -251,64 +238,37 @@ with col_chat:
             "id": response_id
         })
 
-        # ---------- Try to parse JSON request ----------
-        try:
-            parsed = json.loads(assistant_reply)
-        except json.JSONDecodeError:
-            parsed = None
+        # Check for code blocks and execute them
+        code_blocks = re.findall(r"```python(.*?)```", assistant_reply, re.DOTALL)
+        if code_blocks:
+            for code in code_blocks:
+                code = code.strip()
+                # Execute code
+                # Setup context
+                # Use a thread-safe way to capture print output
+                output_buffer = io.StringIO()
+                def safe_print(*args, **kwargs):
+                    print(*args, file=output_buffer, **kwargs)
 
-        if parsed and isinstance(parsed, dict) and "fetch" in parsed:
-            # 1️⃣  Fetch data from MCP
-            fetch_dict = parsed["fetch"]
-            try:
-                raw = fetch_from_mcp(fetch_dict)
-                # 2️⃣  Convert to GeoDataFrame if geometry exists
-                if isinstance(raw, pd.DataFrame) and "geometry" in raw.columns:
-                    gdf = gpd.GeoDataFrame(
-                        raw, geometry=gpd.GeoSeries.from_wkt(raw.geometry)
-                    )
-                    st.session_state.analysis_result = {"df": gdf, "type": "geopandas"}
-                else:
-                    st.session_state.analysis_result = {"df": raw, "type": "pandas"}
-            except Exception as e:
-                st.session_state.analysis_result = None
-                st.error(f"❌ Data fetch failed: {e}")
+                local_scope = {}
 
-        else:
-            # Check for code blocks and execute them
-            code_blocks = re.findall(r"```python(.*?)```", assistant_reply, re.DOTALL)
-            if code_blocks:
-                for code in code_blocks:
-                    code = code.strip()
-                    # Execute code
-                    # Setup context
-                    # Use a thread-safe way to capture print output
-                    output_buffer = io.StringIO()
-                    def safe_print(*args, **kwargs):
-                        print(*args, file=output_buffer, **kwargs)
+                try:
+                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'folium': folium, 'print': safe_print}, local_scope)
+                    output = output_buffer.getvalue()
+                    if output:
+                        st.session_state.chat_history.append({"role": "system", "content": f"Output:\n```\n{output}\n```"})
 
-                    local_scope = {}
+                    if 'result' in local_scope:
+                        result_val = local_scope['result']
+                        st.session_state.chat_history.append({
+                            "role": "system",
+                            "content": result_val,
+                            "type": "result_object"
+                        })
 
-                    try:
-                        exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'print': safe_print}, local_scope)
-                        output = output_buffer.getvalue()
-                        if output:
-                            st.session_state.chat_history.append({"role": "system", "content": f"Output:\n```\n{output}\n```"})
-
-                        if 'output_df' in local_scope:
-                            odf = local_scope['output_df']
-                            # Check type and convert if necessary
-                            if isinstance(odf, pl.DataFrame):
-                                odf = odf.to_pandas()
-
-                            st.session_state.analysis_result = {"df": odf, "type": "pandas"}
-                            st.success("Analysis result updated.")
-
-                    except Exception as e:
-                        st.error(f"Error executing code: {e}")
-                        st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
-            else:
-                st.session_state.analysis_result = None
+                except Exception as e:
+                    st.error(f"Error executing code: {e}")
+                    st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
 
 # ---- Analysis panel ----
 with col_analysis:
