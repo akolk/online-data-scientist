@@ -8,6 +8,7 @@ import pandas as pd
 import geopandas as gpd
 import altair as alt
 import plotly.express as px
+import plotly.graph_objects as go
 import folium
 from streamlit_folium import st_folium
 import polars as pl
@@ -60,8 +61,7 @@ def display_result(result):
         st.dataframe(result)
     elif isinstance(result, (alt.Chart,)):
         st.altair_chart(result, use_container_width=True)
-    elif hasattr(result, "show") and hasattr(result, "to_dict"):
-        # Heuristic for Plotly figures
+    elif isinstance(result, go.Figure):
         st.plotly_chart(result, use_container_width=True)
     elif isinstance(result, (folium.Map, folium.Figure)):
          st_folium(result, width=700)
@@ -212,8 +212,9 @@ with col_chat:
         system_prompt = (
             "You are an assistant that helps data scientists. "
             "Write Python code to answer the user's questions. "
-            "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `altair` (as `alt`), `plotly.express` (as `px`), `folium`, and `streamlit` (as `st`). "
+            "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `plotly.express` (as `px`), `plotly.graph_objects` (as `go`), `folium`, and `streamlit` (as `st`). "
             "The code will be executed in the main thread. "
+            "All graphs must be created using `plotly` (either `plotly.express` as `px` or `plotly.graph_objects` as `go`). "
             "Always store the result of your analysis in a variable named `result`. "
             "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
             "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
@@ -260,7 +261,7 @@ with col_chat:
                 global_variables = {}
 
                 try:
-                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'folium': folium}, global_variables)
+                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
 
                     if 'result' in global_variables:
                         st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
