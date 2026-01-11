@@ -32,6 +32,7 @@ COPY --from=build /usr/local/bin /usr/local/bin
 # Copy the application
 WORKDIR /app
 COPY *.py .
+COPY .streamlit .streamlit
 
 # Expose the default Streamlit port
 EXPOSE 8501
