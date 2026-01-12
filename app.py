@@ -70,8 +70,8 @@ def display_result(result):
     Render the result in the right column.
     Handles DataFrames, Charts, Maps, and text.
     """
-    print(type(results))
-    print(results)
+    print(type(result))
+    print(result)
     if isinstance(result, (pd.DataFrame, pl.DataFrame)):
         st.dataframe(result)
     elif isinstance(result, (alt.Chart,)):
