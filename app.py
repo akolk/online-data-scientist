@@ -313,7 +313,8 @@ def home_page():
                 "All graphs must be created using `plotly` (either `plotly.express` as `px` or `plotly.graph_objects` as `go`). "
                 "Always store the result of your analysis in a variable named `result`. "
                 "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
-                "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
+                "Do not use `print()`. Always store the result of your analysis in a variable named `result`. "
+                "When using polars (pl), always enable streaming mode (e.g., `df.collect(streaming=True)`) to keep memory usage low."
             )
 
             # Check for active uploaded files
