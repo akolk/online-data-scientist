@@ -97,6 +97,15 @@ if "chat_history" not in st.session_state:
 if "last_run_result" not in st.session_state:
     st.session_state.last_run_result = None
 
+if "partition_size" not in st.session_state:
+    st.session_state.partition_size = 500000
+
+if "llm_model" not in st.session_state:
+    st.session_state.llm_model = "openai:gpt-5.2"
+
+if "temperature" not in st.session_state:
+    st.session_state.temperature = 0.0
+
 # Sidebar for file upload
 with st.sidebar:
     st.header("Upload Data")
@@ -165,7 +174,8 @@ with st.sidebar:
                         file_obj,
                         file_obj.name,
                         temp_dir,
-                        make_progress_callback(i)
+                        make_progress_callback(i),
+                        chunk_size=st.session_state.partition_size
                     )
                     all_parquet_files.extend(parquet_files)
 
@@ -193,7 +203,11 @@ with st.sidebar:
         if file_key in st.session_state:
             parquet_files = st.session_state[file_key]
 
-            st.write(f"Partitions: {len(parquet_files)}")
+            # Calculate total size of parquet files
+            total_size_bytes = sum(os.path.getsize(f) for f in parquet_files)
+            total_size_mb = total_size_bytes / (1024 * 1024)
+
+            st.write(f"Partitions: {len(parquet_files)} | Total Size: {total_size_mb:.2f} MB")
 
             if parquet_files and st.button("Load Uploaded Data into Analysis"):
                 # Use LazyFrame to load
@@ -280,9 +294,10 @@ with col_chat:
         # Call Pydantic AI Agent
         try:
             agent = Agent(
-                'openai:gpt-5.2',
+                st.session_state.llm_model,
                 output_type=AnalysisResponse,
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
+                model_settings={'temperature': st.session_state.temperature}
             )
 
             # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
