@@ -53,6 +53,18 @@ class AnalysisResponse(BaseModel):
 # 2️⃣  Helper functions
 # ----------------------------------------------------------------------
 
+def get_file_key(files):
+    """Generates a consistent, safe key for a list of uploaded files."""
+    if not files:
+        return None
+    sorted_files = sorted(files, key=lambda f: f.name)
+    raw_key = "_".join([f"{f.name}_{f.size}" for f in sorted_files])
+    # Sanitize to be safe for filesystem
+    safe_key = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_key)
+    if len(safe_key) > 200:
+        safe_key = hashlib.md5(raw_key.encode()).hexdigest()
+    return f"processed_{safe_key}"
+
 def display_result(result):
     """
     Render the result in the right column.
@@ -81,16 +93,51 @@ def display_result(result):
     else:
         st.write(result)
 
+def settings_page():
+    st.header("Settings")
+
+    # Partition Size
+    partition_size = st.number_input(
+        "Parquet Partition Size (rows)",
+        min_value=1000,
+        max_value=10000000,
+        value=st.session_state.partition_size,
+        step=10000,
+        help="Number of rows per chunk when converting CSV/ZIP to Parquet."
+    )
+    st.session_state.partition_size = partition_size
+
+    # LLM Model
+    llm_model = st.text_input(
+        "LLM Model",
+        value=st.session_state.llm_model,
+        help="The model identifier to use (e.g., openai:gpt-5.2)."
+    )
+    st.session_state.llm_model = llm_model
+
+    # Temperature
+    temperature = st.slider(
+        "Temperature",
+        min_value=0.0,
+        max_value=2.0,
+        value=st.session_state.temperature,
+        step=0.1,
+        help="Controls randomness. 0.0 is deterministic, 1.0 is creative."
+    )
+    st.session_state.temperature = temperature
+
+    st.success("Settings saved automatically.")
+
 
 # ----------------------------------------------------------------------
 # 3️⃣  Streamlit UI
 # ----------------------------------------------------------------------
 st.set_page_config(page_title="🧠 Online Data Scientist", layout="wide")
 
-# Progress bar container in the header
-progress_bar_placeholder = st.empty()
+# Top Menu Bar
+page = st.radio("Menu", ["Home", "Settings"], horizontal=True, label_visibility="collapsed")
 
-# Session state to keep the chat history
+# Session state initialization
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -106,23 +153,20 @@ if "llm_model" not in st.session_state:
 if "temperature" not in st.session_state:
     st.session_state.temperature = 0.0
 
-# Sidebar for file upload
-with st.sidebar:
-    st.header("Upload Data")
-    uploaded_files = st.file_uploader("Choose CSV, ZIP or GZIP files", type=["csv", "zip", "gz", "gzip"], accept_multiple_files=True)
+def home_page():
+    # Progress bar container in the header
+    progress_bar_placeholder = st.empty()
+
+    # Sidebar for file upload
+    with st.sidebar:
+        st.header("Upload Data")
+        uploaded_files = st.file_uploader("Choose CSV, ZIP or GZIP files", type=["csv", "zip", "gz", "gzip"], accept_multiple_files=True)
 
     if uploaded_files:
         # Check if already processed to avoid re-processing on every rerun
         # We use a composite key based on all files.
         sorted_files = sorted(uploaded_files, key=lambda f: f.name)
-
-        # Create a safe file key for directory name
-        raw_key = "_".join([f"{f.name}_{f.size}" for f in sorted_files])
-        # Sanitize to be safe for filesystem
-        safe_key = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_key)
-        if len(safe_key) > 200:
-            safe_key = hashlib.md5(raw_key.encode()).hexdigest()
-        file_key = f"processed_{safe_key}"
+        file_key = get_file_key(uploaded_files)
 
         # Determine persistent storage location
         DATA_DIR = "/data"
@@ -226,95 +270,94 @@ with st.sidebar:
                     st.error(f"Failed to load data: {e}")
 
 
-# Two‑column layout: chat | analysis
-col_chat, col_analysis = st.columns([4, 6])
+    # Two‑column layout: chat | analysis
+    col_chat, col_analysis = st.columns([4, 6])
 
-# ---- Chat panel ----
-with col_chat:
-    st.header("Chatbot")
-    # Display chat history
-    for i, entry in enumerate(st.session_state.chat_history):
-        role = entry["role"].capitalize()
-        content = entry["content"]
+    # ---- Chat panel ----
+    with col_chat:
+        st.header("Chatbot")
+        # Display chat history
+        for i, entry in enumerate(st.session_state.chat_history):
+            role = entry["role"].capitalize()
+            content = entry["content"]
 
-        if role == "User":
-             st.markdown(f"**{role}:** {content}")
-        elif role == "Assistant":
-            if isinstance(content, dict): # AnalysisResponse serialized or dict
-                 st.markdown(f"**{role}:**")
-                 st.write(content.get("answer", ""))
-                 if content.get("disclaimer"):
-                     st.caption(f"Disclaimer: {content['disclaimer']}")
-                 if content.get("related"):
-                     with st.container(border=True):
-                         st.markdown("Related questions:")
-                         for j, r in enumerate(content["related"]):
-                             if st.button(r, key=f"related_{i}_{j}", width="stretch"):
-                                 st.session_state["user_chat_input"] = r
-                                 st.rerun()
-            else:
-                st.markdown(f"**{role}:** {content}")
+            if role == "User":
+                 st.markdown(f"**{role}:** {content}")
+            elif role == "Assistant":
+                if isinstance(content, dict): # AnalysisResponse serialized or dict
+                     st.markdown(f"**{role}:**")
+                     st.write(content.get("answer", ""))
+                     if content.get("disclaimer"):
+                         st.caption(f"Disclaimer: {content['disclaimer']}")
+                     if content.get("related"):
+                         with st.container(border=True):
+                             st.markdown("Related questions:")
+                             for j, r in enumerate(content["related"]):
+                                 if st.button(r, key=f"related_{i}_{j}", width="stretch"):
+                                     st.session_state["user_chat_input"] = r
+                                     st.rerun()
+                else:
+                    st.markdown(f"**{role}:** {content}")
 
-    # Input box
-    user_input = st.chat_input("Ask me about data…", key="user_chat_input")
+        # Input box
+        user_input = st.chat_input("Ask me about data…", key="user_chat_input")
 
-    if user_input:
-        # Save user message
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        if user_input:
+            # Save user message
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-        # Build system prompt that tells the assistant to output Python code.
-        system_prompt = (
-            "You are an assistant that helps data scientists. "
-            "Write Python code to answer the user's questions. "
-            "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `plotly.express` (as `px`), `plotly.graph_objects` (as `go`), `folium`, and `streamlit` (as `st`). "
-            "The code will be executed in the main thread. "
-            "All graphs must be created using `plotly` (either `plotly.express` as `px` or `plotly.graph_objects` as `go`). "
-            "Always store the result of your analysis in a variable named `result`. "
-            "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
-            "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
-        )
-
-        # Check for active uploaded files
-        active_dataset_info = ""
-        active_parquet_files = []
-        if uploaded_files:
-             sorted_files = sorted(uploaded_files, key=lambda f: f.name)
-             fk = "processed_" + "_".join([f"{f.name}_{f.size}" for f in sorted_files])
-             if fk in st.session_state:
-                 active_dataset_info = st.session_state.get(f"{fk}_info", "")
-                 active_parquet_files = st.session_state.get(fk, [])
-
-        if active_parquet_files:
-            system_prompt += (
-                "\nYou also have access to an uploaded dataset. "
-                f"The metadata is: {active_dataset_info}\n"
-                f"The parquet files are located at: {active_parquet_files}\n"
+            # Build system prompt that tells the assistant to output Python code.
+            system_prompt = (
+                "You are an assistant that helps data scientists. "
+                "Write Python code to answer the user's questions. "
+                "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `plotly.express` (as `px`), `plotly.graph_objects` (as `go`), `folium`, and `streamlit` (as `st`). "
+                "The code will be executed in the main thread. "
+                "All graphs must be created using `plotly` (either `plotly.express` as `px` or `plotly.graph_objects` as `go`). "
+                "Always store the result of your analysis in a variable named `result`. "
+                "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
+                "Do not use `print()`. Always store the result of your analysis in a variable named `result`."
             )
 
-        # Call Pydantic AI Agent
-        try:
-            agent = Agent(
-                st.session_state.llm_model,
-                output_type=AnalysisResponse,
-                system_prompt=system_prompt,
-                model_settings={'temperature': st.session_state.temperature}
-            )
+            # Check for active uploaded files
+            active_dataset_info = ""
+            active_parquet_files = []
+            if uploaded_files:
+                 fk = get_file_key(uploaded_files)
+                 if fk in st.session_state:
+                     active_dataset_info = st.session_state.get(f"{fk}_info", "")
+                     active_parquet_files = st.session_state.get(fk, [])
 
-            # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
-            # or mixed contexts, but st.chat_input triggers rerun.
-            result = agent.run_sync(user_input)
-            response_data = result.output
+            if active_parquet_files:
+                system_prompt += (
+                    "\nYou also have access to an uploaded dataset. "
+                    f"The metadata is: {active_dataset_info}\n"
+                    f"The parquet files are located at: {active_parquet_files}\n"
+                )
 
-            st.session_state.chat_history.append({
-                "role": "assistant",
-                "content": response_data.model_dump()
-            })
+            # Call Pydantic AI Agent
+            try:
+                agent = Agent(
+                    st.session_state.llm_model,
+                    output_type=AnalysisResponse,
+                    system_prompt=system_prompt,
+                    model_settings={'temperature': st.session_state.temperature}
+                )
 
-            # Check for code blocks and execute them
-            if response_data.code:
-                code = response_data.code.strip()
-                # Execute code
-                global_variables = {}
+                # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
+                # or mixed contexts, but st.chat_input triggers rerun.
+                result = agent.run_sync(user_input)
+                response_data = result.output
+
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": response_data.model_dump()
+                })
+
+                # Check for code blocks and execute them
+                if response_data.code:
+                    code = response_data.code.strip()
+                    # Execute code
+                    global_variables = {}
 
                 try:
                     exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
@@ -328,20 +371,25 @@ with col_chat:
                     # We might want to add error to history, or just show ephemeral error
                     # st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
 
-            # Force a rerun to display the new message immediately if not automatic
-            st.rerun()
+                # Force a rerun to display the new message immediately if not automatic
+                st.rerun()
 
-        except Exception as e:
-            st.error(f"Error calling assistant: {e}")
+            except Exception as e:
+                st.error(f"Error calling assistant: {e}")
 
 
-# ---- Analysis panel ----
-with col_analysis:
-    st.header("Analysis")
-    if st.session_state.last_run_result is not None:
-        try:
-            display_result(st.session_state.last_run_result)
-        except Exception as e:
-            st.error(f"Error displaying result: {e}")
-    else:
-        st.write("Ask a question that requires data and the assistant will fetch & show it here.")
+    # ---- Analysis panel ----
+    with col_analysis:
+        st.header("Analysis")
+        if st.session_state.last_run_result is not None:
+            try:
+                display_result(st.session_state.last_run_result)
+            except Exception as e:
+                st.error(f"Error displaying result: {e}")
+        else:
+            st.write("Ask a question that requires data and the assistant will fetch & show it here.")
+
+if page == "Home":
+    home_page()
+else:
+    settings_page()
