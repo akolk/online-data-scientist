@@ -40,6 +40,7 @@ EXPOSE 8501
 # Streamlit requires the host to be reachable; use 0.0.0.0
 ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_HEADLESS=true
+ENV PYTHONUNBUFFERED=1
 
 # Optional: expose secrets via environment variables or a .streamlit/secrets.toml
 # Example:
