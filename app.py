@@ -70,8 +70,6 @@ def display_result(result):
     Render the result in the right column.
     Handles DataFrames, Charts, Maps, and text.
     """
-    print(type(result))
-    print(result)
     if isinstance(result, (pd.DataFrame, pl.DataFrame)):
         st.dataframe(result)
     elif isinstance(result, (alt.Chart,)):
@@ -360,6 +358,7 @@ def home_page():
                     global_variables = {}
 
                 try:
+                    print(code)
                     exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
                           
                     if 'result' in global_variables:
