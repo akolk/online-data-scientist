@@ -1,4 +1,4 @@
-# 🧠 Online Data Scientist (with OpenCode)
+# 🧠 Online Data Scientist (with OpenCode-k3s)
 
 **Online Data Scientist** is an intelligent assistant that acts as a bridge between you and your data. Built with [Streamlit](https://streamlit.io/), it leverages OpenAI's GPT models to understand your questions, fetches relevant data from a Model Context Protocol (MCP) endpoint, and visualizes it instantly.
 
