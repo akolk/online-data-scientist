@@ -360,18 +360,18 @@ def home_page():
                     # Execute code
                     global_variables = {}
 
-                try:
-                    print(code)
-                    exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
-                          
-                    if 'result' in global_variables:
-                        st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
-                    else:
-                        st.error("The generated code did not produce a 'result' variable.")
-                except Exception as e:
-                    st.error(f"Error executing code: {e}")
-                    # We might want to add error to history, or just show ephemeral error
-                    # st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
+                    try:
+                        print(code)
+                        exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
+                              
+                        if 'result' in global_variables:
+                            st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
+                        else:
+                            st.error("The generated code did not produce a 'result' variable.")
+                    except Exception as e:
+                        st.error(f"Error executing code: {e}")
+                        # We might want to add error to history, or just show ephemeral error
+                        # st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
 
                 # Force a rerun to display the new message immediately if not automatic
                 st.rerun()
