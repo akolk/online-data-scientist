@@ -18,6 +18,7 @@ import tempfile
 import shutil
 import copy
 import data_processor
+import code_executor
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from typing import List, Optional
@@ -307,6 +308,12 @@ def home_page():
         user_input = st.chat_input("Ask me about data…", key="user_chat_input")
 
         if user_input:
+            # Validate user input for security
+            is_valid, error_msg = code_executor.validate_user_input(user_input)
+            if not is_valid:
+                st.error(f"Invalid input: {error_msg}")
+                return
+            
             # Save user message
             st.session_state.chat_history.append({"role": "user", "content": user_input})
 
@@ -361,21 +368,22 @@ def home_page():
                 # Check for code blocks and execute them
                 if response_data.code:
                     code = response_data.code.strip()
-                    # Execute code
+                    # Execute code securely with sandboxing
                     global_variables = {}
-
-                    try:
-                        logger.debug(f"Executing generated code:\n{code}")
-                        exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
-                              
-                        if 'result' in global_variables:
-                            st.session_state.last_run_result = copy.deepcopy(global_variables['result'])
+                    
+                    success, error_msg, result = code_executor.execute_code_securely(
+                        code=code,
+                        global_variables=global_variables,
+                        pl=pl, pd=pd, st=st, gpd=gpd, alt=alt, px=px, go=go, folium=folium
+                    )
+                    
+                    if success:
+                        if result is not None:
+                            st.session_state.last_run_result = copy.deepcopy(result)
                         else:
                             st.error("The generated code did not produce a 'result' variable.")
-                    except Exception as e:
-                        st.error(f"Error executing code: {e}")
-                        # We might want to add error to history, or just show ephemeral error
-                        # st.session_state.chat_history.append({"role": "system", "content": f"Error executing code: {e}"})
+                    else:
+                        st.error(error_msg)
 
                 # Force a rerun to display the new message immediately if not automatic
                 st.rerun()

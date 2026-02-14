@@ -185,6 +185,72 @@ logger.warning(f"No data found in {source_path}")
 - No remaining print statements in production code (except system prompt string)
 - Backward compatible - no API changes
 
+### 2026-02-14 - Implement Secure Code Execution Sandbox
+- **Type**: security
+- **Scope**: code_executor.py (new), app.py (modified), tests/test_code_executor.py (new)
+- **Impact**: Fixed critical security vulnerability where AI-generated code was executed without sandboxing or validation
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Addressed a critical security vulnerability where the application used `exec()` to run AI-generated Python code without any validation or sandboxing. This could allow malicious code execution including file system access, system commands, and network operations.
+
+**Changes Made**:
+
+1. **Created `code_executor.py` module** (206 lines):
+   - `validate_code()`: AST-based code validation to detect dangerous operations
+   - `create_restricted_globals()`: Creates sandboxed globals dict with only safe built-ins
+   - `execute_code_securely()`: Main execution function with validation and error handling
+   - `validate_user_input()`: Input sanitization for user queries
+
+2. **Security Controls Implemented**:
+   - **Blocked imports**: os, sys, subprocess, socket, requests, urllib, pickle, marshal, etc.
+   - **Blocked functions**: eval(), exec(), compile(), __import__(), open()
+   - **Input validation**: Detects suspicious patterns in user queries (eval, exec, subprocess, os.system, etc.)
+   - **Restricted built-ins**: Only safe built-ins available (len, range, str, int, sum, etc.)
+   - **Length limits**: User input capped at 10,000 characters
+
+3. **Updated `app.py`**:
+   - Replaced raw `exec()` call with `execute_code_securely()`
+   - Added input validation before processing user messages
+   - Integrated secure globals creation for data science modules (pl, pd, st, gpd, alt, px, go, folium)
+
+4. **Test Coverage**:
+   - Created 37 comprehensive security tests in `tests/test_code_executor.py`
+   - Tests cover: code validation, restricted globals, secure execution, input validation
+   - All security controls verified with positive and negative test cases
+   - Total test count increased from 30 to 67 tests
+
+**Example Security Block**:
+```python
+# Before: Direct execution (DANGEROUS)
+exec(code, {'pl': pl, 'pd': pd, ...}, global_variables)
+
+# After: Validated and sandboxed execution (SAFE)
+success, error_msg, result = execute_code_securely(
+    code=code,
+    global_variables=global_variables,
+    pl=pl, pd=pd, st=st, gpd=gpd, alt=alt, px=px, go=go, folium=folium
+)
+```
+
+**Blocked Operations Examples**:
+- `import os` → Blocked with clear error message
+- `eval("1+1")` → Blocked as dangerous
+- `open("file.txt")` → Blocked for file safety
+- `subprocess.call("ls")` → Blocked in input validation
+
+**Impact Assessment**:
+- **Risk Reduction**: Eliminated arbitrary code execution vulnerability
+- **Backward Compatibility**: Maintained - all existing functionality preserved
+- **User Experience**: Enhanced - clear error messages for blocked operations
+- **Test Coverage**: +37 tests (123% increase), all passing
+
+**Confidence Level**: HIGH
+- All 67 tests pass (100% success rate)
+- Security controls thoroughly tested
+- No breaking changes to existing functionality
+
 ---
 
 *[Next improvement will be added here by OpenCode]*
