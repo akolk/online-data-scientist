@@ -4,6 +4,10 @@ import gzip
 import shutil
 import polars as pl
 import time
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 def detect_separator(filename):
     with open(filename, 'rb') as f:
@@ -136,7 +140,7 @@ def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, 
                 if not batches:
                     # If the first batch is empty, it means the file has no data (or header only)
                     if batch_idx == 0:
-                        print(f"Warning: No data found in {source_path}")
+                        logger.warning(f"No data found in {source_path}")
                     break
 
                 df = batches[0]
@@ -160,7 +164,7 @@ def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, 
                     progress_callback(current_prog)
 
         except Exception as e:
-            print(f"Failed to convert {source_path}: {e}")
+            logger.error(f"Failed to convert {source_path}: {e}")
 
     if progress_callback: progress_callback(1.0)
 

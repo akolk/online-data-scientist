@@ -140,6 +140,51 @@ Created a test suite for the core helper functions in app.py that can be tested 
 - Key app.py functions now have regression protection
 - Foundation established for future Streamlit component testing
 
+### 2026-02-14 - Replace Print Statements with Proper Logging
+- **Type**: refactoring
+- **Scope**: app.py and data_processor.py
+- **Impact**: Replaced 5 print statements with Python's logging module for better debugging and production readiness
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Migrated from print statements to Python's standard logging module for better log management and configurability:
+
+**Changes in app.py**:
+- Added `import logging` and `logger = logging.getLogger(__name__)`
+- Replaced `print(type(result))` and `print(result)` in `display_result()` with `logger.debug()` calls
+- Replaced `print(code)` in code execution block with `logger.debug()`
+
+**Changes in data_processor.py**:
+- Added `import logging` and `logger = logging.getLogger(__name__)`
+- Replaced `print(f"Warning: No data found in {source_path}")` with `logger.warning()`
+- Replaced `print(f"Failed to convert {source_path}: {e}")` with `logger.error()`
+
+**Benefits**:
+1. **Configurable log levels**: DEBUG for development, WARNING/ERROR for production
+2. **Better log management**: Logs can be redirected to files or external services
+3. **Standard Python practice**: Follows PEP 8 and Python logging best practices
+4. **Non-breaking change**: Backward compatible, existing behavior preserved
+
+**Before**:
+```python
+print(type(result))
+print(result)
+print(f"Warning: No data found in {source_path}")
+```
+
+**After**:
+```python
+logger.debug(f"Result type: {type(result)}")
+logger.debug(f"Result value: {result}")
+logger.warning(f"No data found in {source_path}")
+```
+
+**Verification**:
+- Syntax checked with `python3 -m py_compile` for both files
+- No remaining print statements in production code (except system prompt string)
+- Backward compatible - no API changes
+
 ---
 
 *[Next improvement will be added here by OpenCode]*

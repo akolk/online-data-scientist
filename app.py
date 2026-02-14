@@ -4,6 +4,7 @@ import re
 import sys
 import io
 import hashlib
+import logging
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -20,6 +21,9 @@ import data_processor
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from typing import List, Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------
 # 1️⃣  Configuration – read secrets from environment
@@ -70,8 +74,8 @@ def display_result(result):
     Render the result in the right column.
     Handles DataFrames, Charts, Maps, and text.
     """
-    print(type(result))
-    print(result)
+    logger.debug(f"Result type: {type(result)}")
+    logger.debug(f"Result value: {result}")
     if isinstance(result, (pd.DataFrame, pl.DataFrame)):
         st.dataframe(result)
     elif isinstance(result, (alt.Chart,)):
@@ -361,7 +365,7 @@ def home_page():
                     global_variables = {}
 
                     try:
-                        print(code)
+                        logger.debug(f"Executing generated code:\n{code}")
                         exec(code, {'pl': pl, 'pd': pd, 'st': st, 'gpd': gpd, 'alt': alt, 'px': px, 'go': go, 'folium': folium}, global_variables)
                               
                         if 'result' in global_variables:
