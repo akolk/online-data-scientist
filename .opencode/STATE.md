@@ -21,7 +21,7 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
   - `requirements.txt`: Dependencies
 
 ### Current Metrics
-- Test Coverage: data_processor.py covered with 19 unit tests
+- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) = 30 total tests
 - Code Quality: Issues found - critical bug fixed, exec() usage is security concern
 - Dependencies: 14 packages listed, properly pinned with version constraints
 - Documentation: README present but MCP_ENDPOINT references may be outdated
@@ -33,14 +33,13 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 1. **FIXED**: Code execution block incorrectly indented (NameError risk when no code returned)
 2. Security: `exec()` used with AI-generated code without sandboxing
 3. No input validation on user queries
-4. **IMPROVED**: Test coverage added for data_processor.py (19 tests)
+4. **IMPROVED**: Test coverage added for data_processor.py (19 tests) and app.py (11 tests)
 5. **FIXED**: Dependencies now properly pinned in requirements.txt
 
 ### Improvement Opportunities
 
 1. **High Priority**:
-   - ✅ Add test coverage for core functionality (data_processor.py done)
-   - Add test coverage for app.py functionality
+   - ✅ Add test coverage for core functionality (data_processor.py and app.py helper functions done - 30 tests total)
    - Implement proper error handling and logging
    - ✅ Pin dependency versions in requirements.txt (done)
    
@@ -55,12 +54,12 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
    - Documentation improvements
 
 ## Next Action
-Completed (2026-02-14): Added comprehensive test suite for data_processor.py with 19 unit tests covering:
-- Separator detection (comma, semicolon, empty files, mixed)
-- Dataset info extraction (schema, empty lists, invalid files)
-- File extraction and conversion (CSV, GZIP, ZIP, chunking, progress callbacks)
-- Error handling (corrupted files, missing directories)
-- Data integrity preservation
+Completed (2026-02-14): Added comprehensive test suite for app.py with 11 unit tests covering:
+- `get_file_key()` function - file key generation with sanitization, hash for long keys, consistency
+- `display_result()` function - DataFrame rendering for pandas and polars
+- `AnalysisResponse` model - Pydantic validation and field constraints
+
+**Test Results**: All 30 tests pass (19 for data_processor.py + 11 for app.py)
 
 ---
 
@@ -75,3 +74,8 @@ Completed (2026-02-14): Added comprehensive test suite for data_processor.py wit
 **Status**: No improvements needed at this time
 **Analysis**: Codebase is in good shape
 **Next Check**: Schedule next analysis
+
+### 2026-02-14 04:30:00 UTC
+**Status**: Completed test coverage improvement for app.py
+**Analysis**: Added 11 new tests for app.py helper functions, bringing total to 30 tests
+**Next Check**: Focus on error handling, logging, and security improvements

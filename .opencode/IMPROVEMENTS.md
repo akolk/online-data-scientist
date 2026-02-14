@@ -102,4 +102,44 @@ This improvement establishes a testing foundation that will prevent regressions 
 
 ---
 
+### 2026-02-14 - Add Test Coverage for app.py Helper Functions
+- **Type**: test
+- **Scope**: tests/test_app.py (11 tests)
+- **Impact**: Added comprehensive test coverage for app.py's testable helper functions
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a test suite for the core helper functions in app.py that can be tested without requiring full Streamlit context:
+
+**TestGetFileKey class** (6 tests):
+- `test_returns_none_for_empty_files`: Validates None return for null/empty file lists
+- `test_generates_consistent_key_for_single_file`: Ensures deterministic key generation
+- `test_generates_consistent_key_for_multiple_files`: Verifies order-independent key generation
+- `test_sanitizes_special_characters`: Tests filename sanitization for filesystem safety
+- `test_uses_hash_for_long_keys`: Validates MD5 hashing for keys >200 characters
+- `test_includes_file_size_in_key`: Ensures file size is included in key generation
+
+**TestDisplayResult class** (2 tests):
+- `test_handles_pandas_dataframe`: Verifies pandas DataFrame rendering via st.dataframe
+- `test_handles_polars_dataframe`: Verifies polars DataFrame rendering via st.dataframe
+
+**TestAnalysisResponseModel class** (3 tests):
+- `test_model_creation_with_required_fields`: Validates Pydantic model with required fields only
+- `test_model_creation_with_all_fields`: Tests model creation with all optional fields
+- `test_model_related_max_length`: Verifies max_length=2 constraint on related field
+
+**Test Results**: All 11 tests pass successfully
+- Tests use pytest fixtures with proper module mocking
+- Module cache clearing ensures clean imports between tests
+- Mock classes created for isinstance() compatibility
+- Tests complete in ~1.7 seconds
+
+**Coverage Impact**:
+- Total test count increased from 19 to 30 tests (+58%)
+- Key app.py functions now have regression protection
+- Foundation established for future Streamlit component testing
+
+---
+
 *[Next improvement will be added here by OpenCode]*
