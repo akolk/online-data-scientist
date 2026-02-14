@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-02-14
 **Current Branch**: develop
-**Status**: Bug fix applied - critical indentation error fixed
+**Status**: Timeout protection added for code execution - DoS protection implemented
 
 ## Codebase Analysis
 
@@ -21,8 +21,8 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
   - `requirements.txt`: Dependencies
 
 ### Current Metrics
-- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) = 30 total tests
-- Code Quality: Issues found - critical bug fixed, exec() usage is security concern
+- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) + code_executor.py (42 tests) = 72 total tests
+- Code Quality: Issues found - critical bug fixed, exec() usage secured with sandbox and timeout
 - Dependencies: 14 packages listed, properly pinned with version constraints
 - Documentation: README present but MCP_ENDPOINT references may be outdated
 
@@ -33,14 +33,15 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 1. **FIXED**: Code execution block incorrectly indented (NameError risk when no code returned)
 2. **FIXED**: `exec()` used with AI-generated code without sandboxing - now uses secure code execution with AST validation
 3. **FIXED**: Input validation added for user queries - blocks suspicious patterns
-4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), and code_executor.py (37 tests) = 67 total tests
+4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), and code_executor.py (42 tests) = 72 total tests
 5. **FIXED**: Dependencies now properly pinned in requirements.txt
 6. **FIXED**: Print statements replaced with proper logging (5 print statements → logging calls)
+7. **FIXED**: Timeout protection added for code execution (30s default, configurable) - prevents infinite loops
 
 ### Improvement Opportunities
 
 1. **High Priority**:
-   - ✅ Add test coverage for core functionality (67 tests total: data_processor.py 19, app.py 11, code_executor.py 37)
+   - ✅ Add test coverage for core functionality (72 tests total: data_processor.py 19, app.py 11, code_executor.py 42)
    - ✅ Implement proper error handling and logging (completed)
    - ✅ Pin dependency versions in requirements.txt (done)
    - ✅ Refactor code execution to use safer alternatives (completed - secure sandbox with AST validation)
@@ -48,7 +49,7 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
    
 2. **Medium Priority**:
    - ✅ Implement proper logging instead of print statements (completed)
-   - Add timeout for code execution to prevent infinite loops
+   - ✅ Add timeout for code execution to prevent infinite loops (completed - 30s default with configurable parameter)
    - Add resource limits (memory/CPU) for code execution
    
 3. **Low Priority**:
@@ -57,20 +58,38 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
    - Documentation improvements
 
 ## Next Action
-Completed (2026-02-14): Implemented secure code execution sandbox to address critical security vulnerability:
-- Created `code_executor.py` module with AST-based code validation
-- Added input validation for user queries
-- Restricted globals available to exec() to prevent code injection
-- Added comprehensive test suite with 37 tests for security functions
+Completed (2026-02-14): Added timeout protection for code execution to prevent infinite loops and DoS attacks:
+- Implemented signal-based timeout using `signal.SIGALRM` for Unix-like systems
+- Added fallback process-based execution with `multiprocessing` for Windows compatibility
+- Added configurable `timeout` parameter to `execute_code_securely()` (default: 30 seconds)
+- Created 5 new tests for timeout functionality (42 total tests for code_executor.py)
+- Timeout prevents infinite loops like `while True: pass` from hanging the application
 
-**Security Improvements**:
-- Blocks dangerous imports (os, sys, subprocess, socket, requests, etc.)
-- Blocks eval(), exec(), compile(), __import__(), open() calls
-- Validates user input for suspicious patterns (eval, exec, subprocess, etc.)
-- Restricts built-ins to safe subset only
-- Provides clear error messages for blocked operations
+**Reliability Improvements**:
+- Prevents AI-generated code with infinite loops from freezing the app
+- Protects against accidental or malicious DoS via slow/long-running code
+- Cross-platform support (Unix signals + Windows multiprocessing)
+- Clear timeout error messages for users
+- Backward compatible - existing code continues to work
 
-**Test Results**: All 67 tests pass (19 data_processor + 11 app + 37 code_executor)
+**Test Results**: All 42 code_executor tests pass (100% success rate)
+- 37 existing security tests pass
+- 5 new timeout tests pass (including infinite loop detection)
+
+**Next Check**: Focus on resource limits (memory/CPU) for enhanced sandboxing
+
+---
+
+### 2026-02-14 18:00:00 UTC
+**Status**: Timeout protection completed - DoS vulnerability fixed
+**Analysis**: Implemented execution timeout to prevent infinite loops in AI-generated code
+**Changes**:
+- Added `execution_timeout` context manager with signal-based approach
+- Added `_execute_in_process()` for Windows/multiprocessing fallback
+- Modified `execute_code_securely()` to accept `timeout` parameter
+- Added `DEFAULT_EXECUTION_TIMEOUT = 30` constant
+- Created `TestExecutionTimeout` test class with 5 test cases
+**Impact**: Eliminates risk of application freezing from malicious or buggy AI-generated code
 
 ### 2026-02-14 16:00:00 UTC
 **Status**: Security improvement completed - critical exec() vulnerability fixed

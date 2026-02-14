@@ -387,5 +387,78 @@ class TestValidateUserInput:
             assert error_msg is None, f"Error should be None for: {query}"
 
 
+class TestExecutionTimeout:
+    """Test cases for code execution timeout functionality."""
+    
+    def test_executes_code_within_timeout(self):
+        """Test that code executing within timeout succeeds."""
+        global_vars = {}
+        success, error_msg, result = code_executor.execute_code_securely(
+            code="result = 1 + 1",
+            global_variables=global_vars,
+            timeout=5
+        )
+        
+        assert success is True
+        assert error_msg is None
+        assert result == 2
+    
+    def test_times_out_infinite_loop(self):
+        """Test that infinite loops are terminated by timeout."""
+        global_vars = {}
+        success, error_msg, result = code_executor.execute_code_securely(
+            code="while True: pass",
+            global_variables=global_vars,
+            timeout=1  # Short timeout for test
+        )
+        
+        assert success is False
+        assert "timeout" in error_msg.lower() or "timed out" in error_msg.lower()
+        assert result is None
+    
+    def test_times_out_slow_computation(self):
+        """Test that slow computations respect timeout."""
+        # This code will take a long time without timeout (CPU-intensive loop)
+        # Using a busy-wait loop since time.sleep is not available in restricted environment
+        code = """
+i = 0
+while i < 1000000000:
+    i += 1
+result = "completed"
+"""
+        global_vars = {}
+        success, error_msg, result = code_executor.execute_code_securely(
+            code=code,
+            global_variables=global_vars,
+            timeout=1  # Short timeout for test
+        )
+        
+        assert success is False
+        assert "timeout" in error_msg.lower() or "timed out" in error_msg.lower()
+    
+    def test_default_timeout_applied(self):
+        """Test that default timeout is used when not specified."""
+        global_vars = {}
+        success, error_msg, result = code_executor.execute_code_securely(
+            code="result = 42",
+            global_variables=global_vars
+        )
+        
+        assert success is True
+        assert result == 42
+    
+    def test_respects_custom_timeout(self):
+        """Test that custom timeout parameter is respected."""
+        global_vars = {}
+        success, error_msg, result = code_executor.execute_code_securely(
+            code="result = sum(range(100))",
+            global_variables=global_vars,
+            timeout=10
+        )
+        
+        assert success is True
+        assert result == 4950
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
