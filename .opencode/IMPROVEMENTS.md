@@ -62,6 +62,44 @@ if response_data.code:
 
 This is a high-impact, low-risk fix that prevents application crashes during normal usage.
 
+### 2026-02-14 - Add Comprehensive Test Suite for data_processor.py
+- **Type**: test
+- **Scope**: tests/test_data_processor.py (19 tests)
+- **Impact**: Achieved 100% test coverage for data_processor.py module
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive test suite covering all functionality in the data processing module:
+
+**TestDetectSeparator class** (4 tests):
+- `test_detects_comma_separator`: Validates comma detection in CSV files
+- `test_detects_semicolon_separator`: Validates semicolon detection for European CSV formats
+- `test_defaults_to_comma_on_empty_file`: Ensures graceful handling of empty files
+- `test_handles_mixed_separators`: Tests priority logic when both separators present
+
+**TestGetDatasetInfo class** (4 tests):
+- `test_returns_no_data_for_empty_list`: Validates empty input handling
+- `test_returns_schema_info_for_valid_parquet`: Tests schema extraction from Parquet files
+- `test_handles_multiple_parquet_files`: Ensures first file is used for schema
+- `test_handles_invalid_parquet_gracefully`: Validates error handling for corrupted files
+
+**TestExtractAndConvert class** (11 tests):
+- File format support: CSV, GZIP, ZIP extraction
+- `test_splits_large_files_into_chunks`: Validates chunking behavior
+- `test_progress_callback_is_called`: Ensures progress reporting works
+- `test_handles_semicolon_separated_csv`: Tests European format support
+- `test_preserves_data_integrity`: Validates type preservation (strings, integers, floats, booleans)
+- Error handling: corrupted ZIP/GZIP files
+- `test_creates_output_directory_if_not_exists`: Validates directory creation
+
+**Test Results**: All 19 tests pass successfully (100% success rate)
+- Tests use pytest fixtures and tmp_path for isolation
+- No external dependencies required beyond polars and pytest
+- Tests complete in ~0.25 seconds
+
+This improvement establishes a testing foundation that will prevent regressions in data processing functionality and enables confident future refactoring.
+
 ---
 
 *[Next improvement will be added here by OpenCode]*
