@@ -3,27 +3,52 @@ import zipfile
 import gzip
 import shutil
 import polars as pl
-import time
 import logging
 from typing import List, Optional, Callable
+from functools import lru_cache
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Constants for performance optimization
+CHUNK_SIZE_BYTES = 1024 * 1024  # 1MB chunks for file I/O
+SAMPLE_SIZE_BYTES = 8192  # 8KB sample for separator detection
+PROGRESS_THROTTLE_INTERVAL = 0.1  # Minimum seconds between progress callbacks
 
+
+@lru_cache(maxsize=128)
 def detect_separator(filename: str) -> str:
-    with open(filename, 'rb') as f:
-        # Read the first few lines to detect separator
-        sample = f.read(2048)
-        if not sample:
-            return ','  # Default
+    """Detect CSV separator by analyzing file sample.
 
-        n_commas = sample.count(b',')
-        n_semicolons = sample.count(b';')
+    Uses caching to avoid re-reading files that have already been analyzed.
+    Cache key is the filename, so modifications to the file won't be detected
+    unless the filename changes.
 
-        if n_semicolons > n_commas:
-            return ';'
-        return ','
+    Args:
+        filename: Path to the CSV file to analyze
+
+    Returns:
+        The detected separator character (',' or ';')
+    """
+    try:
+        with open(filename, 'rb') as f:
+            # Read sample for separator detection
+            sample = f.read(SAMPLE_SIZE_BYTES)
+            if not sample:
+                return ','  # Default for empty files
+
+            # Count potential separators in the sample
+            n_commas = sample.count(b',')
+            n_semicolons = sample.count(b';')
+            n_tabs = sample.count(b'\t')
+
+            # Return the most frequent separator
+            counts = [(n_commas, ','), (n_semicolons, ';'), (n_tabs, '\t')]
+            counts.sort(reverse=True)
+            return counts[0][1]
+    except (IOError, OSError) as e:
+        logger.warning(f"Could not detect separator for {filename}: {e}")
+        return ','  # Safe default
 
 
 def get_dataset_info(parquet_files: List[str]) -> str:
@@ -43,6 +68,62 @@ def get_dataset_info(parquet_files: List[str]) -> str:
         return f"Schema: {schema_str}"
     except Exception as e:
         return f"Error reading schema: {e}"
+
+
+class ThrottledProgress:
+    """Helper class to throttle progress callback invocations.
+
+    Reduces UI overhead by limiting how frequently progress updates are sent.
+    """
+
+    def __init__(self, callback: Optional[Callable[[float], None]], min_interval: float = PROGRESS_THROTTLE_INTERVAL):
+        self.callback = callback
+        self.min_interval = min_interval
+        self.last_call = 0
+        self.last_progress = -1.0
+
+    def __call__(self, progress: float):
+        """Call the progress callback if enough time has passed or progress is final."""
+        if not self.callback:
+            return
+
+        import time
+        now = time.time()
+
+        # Always call for start (0.0) and end (1.0), or if enough time passed
+        if progress in (0.0, 1.0) or (now - self.last_call >= self.min_interval and abs(progress - self.last_progress) >= 0.01):
+            self.callback(progress)
+            self.last_call = now
+            self.last_progress = progress
+
+
+def _copy_file_chunked(source, target_path: str, progress_callback: Optional[Callable[[float], None]] = None, total_size: int = 0) -> int:
+    """Copy file using chunked reading for memory efficiency.
+
+    Args:
+        source: File-like object to read from
+        target_path: Path to write to
+        progress_callback: Optional progress callback
+        total_size: Total size for progress calculation (0 = unknown)
+
+    Returns:
+        Number of bytes written
+    """
+    bytes_written = 0
+    throttle = ThrottledProgress(progress_callback)
+
+    with open(target_path, "wb") as target:
+        while True:
+            chunk = source.read(CHUNK_SIZE_BYTES)
+            if not chunk:
+                break
+            target.write(chunk)
+            bytes_written += len(chunk)
+
+            if total_size > 0:
+                throttle((bytes_written / total_size) * 0.5)
+
+    return bytes_written
 
 
 def extract_and_convert(
@@ -67,15 +148,15 @@ def extract_and_convert(
     """
     os.makedirs(output_dir, exist_ok=True)
     extracted_files = []
+    throttle = ThrottledProgress(progress_callback)
 
     # 1. Extraction Phase
-    if progress_callback:
-        progress_callback(0.05)
+    throttle(0.05)
 
     try:
         if filename.endswith('.zip'):
             with zipfile.ZipFile(file_obj) as zf:
-                total_size = sum(info.file_size for info in zf.infolist())
+                total_size = sum(info.file_size for info in zf.infolist() if not info.is_dir())
                 processed_size = 0
 
                 for info in zf.infolist():
@@ -85,17 +166,12 @@ def extract_and_convert(
                     target_path = os.path.join(output_dir, info.filename)
                     os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
-                    with zf.open(info) as source, open(target_path, "wb") as target:
-                        while True:
-                            chunk = source.read(1024 * 1024)  # 1MB chunks
-                            if not chunk:
-                                break
-                            target.write(chunk)
-                            processed_size += len(chunk)
-
-                            if progress_callback and total_size > 0:
-                                progress = (processed_size / total_size) * 0.5
-                                progress_callback(progress)
+                    with zf.open(info) as source:
+                        processed_size += _copy_file_chunked(
+                            source, target_path,
+                            lambda p: throttle(0.05 + p * 0.45),
+                            total_size
+                        )
 
                     extracted_files.append(target_path)
 
@@ -106,35 +182,28 @@ def extract_and_convert(
 
             target_path = os.path.join(output_dir, out_name)
 
-            with gzip.open(file_obj, 'rb') as source, open(target_path, 'wb') as target:
-                while True:
-                    chunk = source.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    target.write(chunk)
-                    if progress_callback:
-                        progress_callback(0.25)
+            with gzip.open(file_obj, 'rb') as source:
+                _copy_file_chunked(source, target_path, lambda p: throttle(0.05 + p * 0.45))
 
             extracted_files.append(target_path)
 
         elif filename.endswith('.csv'):
             target_path = os.path.join(output_dir, filename)
-            with open(target_path, "wb") as target:
-                target.write(file_obj.read())
+            # Use chunked reading for memory efficiency with large files
+            _copy_file_chunked(file_obj, target_path, lambda p: throttle(0.05 + p * 0.45))
             extracted_files.append(target_path)
 
         else:
             # Fallback for other files, assuming they are readable as text/csv
             target_path = os.path.join(output_dir, filename)
-            with open(target_path, "wb") as target:
-                target.write(file_obj.read())
+            # Use chunked reading for memory efficiency
+            _copy_file_chunked(file_obj, target_path, lambda p: throttle(0.05 + p * 0.45))
             extracted_files.append(target_path)
 
     except Exception as e:
         raise RuntimeError(f"Extraction failed: {e}")
 
-    if progress_callback:
-        progress_callback(0.5)
+    throttle(0.5)
 
     # 2. Conversion Phase
     parquet_files = []
@@ -148,6 +217,9 @@ def extract_and_convert(
             reader = pl.read_csv_batched(source_path, ignore_errors=True, batch_size=chunk_size, separator=separator)
 
             batch_idx = 0
+            file_start_prog = 0.5 + (i / total_files) * 0.5
+            file_end_prog = 0.5 + ((i + 1) / total_files) * 0.5
+
             while True:
                 batches = reader.next_batches(1)
                 if not batches:
@@ -166,21 +238,14 @@ def extract_and_convert(
                 parquet_files.append(part_path)
                 batch_idx += 1
 
-                if progress_callback:
-                    file_start_prog = 0.5 + (i / total_files) * 0.5
-                    file_end_prog = 0.5 + ((i + 1) / total_files) * 0.5
-
-                    fraction = 1 - (1 / (1 + batch_idx * 0.1))
-                    current_prog = file_start_prog + (file_end_prog - file_start_prog) * fraction
-
-                    if current_prog > 0.99:
-                        current_prog = 0.99
-                    progress_callback(current_prog)
+                # Simplified progress calculation
+                fraction = min(batch_idx / (batch_idx + 10), 0.99)
+                current_prog = file_start_prog + (file_end_prog - file_start_prog) * fraction
+                throttle(current_prog)
 
         except Exception as e:
             logger.error(f"Failed to convert {source_path}: {e}")
 
-    if progress_callback:
-        progress_callback(1.0)
+    throttle(1.0)
 
     return parquet_files

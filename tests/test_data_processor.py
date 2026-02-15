@@ -28,6 +28,14 @@ class TestDetectSeparator:
         result = detect_separator(str(csv_file))
         assert result == ";"
     
+    def test_detects_tab_separator(self, tmp_path):
+        """Test that tab-separated files are detected correctly."""
+        csv_file = tmp_path / "tab.csv"
+        csv_file.write_text("a\tb\tc\n1\t2\t3\n4\t5\t6")
+        
+        result = detect_separator(str(csv_file))
+        assert result == "\t"
+    
     def test_defaults_to_comma_on_empty_file(self, tmp_path):
         """Test that empty files default to comma separator."""
         csv_file = tmp_path / "empty.csv"
@@ -44,6 +52,34 @@ class TestDetectSeparator:
         
         result = detect_separator(str(csv_file))
         assert result == ";"
+    
+    def test_caches_separator_results(self, tmp_path):
+        """Test that separator detection uses LRU caching."""
+        from data_processor import detect_separator as ds
+        
+        csv_file = tmp_path / "cached.csv"
+        csv_file.write_text("a,b,c\n1,2,3")
+        
+        # Clear cache before test
+        ds.cache_clear()
+        
+        # First call - should read file
+        result1 = ds(str(csv_file))
+        info1 = ds.cache_info()
+        
+        # Second call - should use cache
+        result2 = ds(str(csv_file))
+        info2 = ds.cache_info()
+        
+        assert result1 == result2
+        assert info2.hits == info1.hits + 1
+    
+    def test_handles_nonexistent_file(self, tmp_path):
+        """Test that nonexistent files gracefully return comma as default."""
+        nonexistent_file = tmp_path / "does_not_exist.csv"
+        
+        result = detect_separator(str(nonexistent_file))
+        assert result == ","  # Should return safe default
 
 
 class TestGetDatasetInfo:
@@ -326,5 +362,102 @@ Charlie,35,75000.00,true,92.1'''
         assert len(result) > 0
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+class TestThrottledProgress:
+    """Test suite for ThrottledProgress helper class."""
+    
+    def test_calls_callback_for_start_and_end(self):
+        """Test that start (0.0) and end (1.0) are always called."""
+        from data_processor import ThrottledProgress
+        
+        calls = []
+        throttle = ThrottledProgress(lambda p: calls.append(p), min_interval=1.0)
+        
+        throttle(0.0)
+        throttle(0.5)
+        throttle(1.0)
+        
+        assert 0.0 in calls
+        assert 1.0 in calls
+    
+    def test_throttles_intermediate_calls(self):
+        """Test that intermediate calls are throttled based on time."""
+        from data_processor import ThrottledProgress
+        import time
+        
+        calls = []
+        throttle = ThrottledProgress(lambda p: calls.append(p), min_interval=0.1)
+        
+        throttle(0.0)
+        throttle(0.1)
+        throttle(0.2)
+        time.sleep(0.15)  # Wait longer than min_interval
+        throttle(0.3)
+        throttle(1.0)
+        
+        # Should have: 0.0, some intermediate (if enough time passed), and 1.0
+        assert calls[0] == 0.0
+        assert calls[-1] == 1.0
+    
+    def test_no_callback_does_not_raise(self):
+        """Test that None callback is handled gracefully."""
+        from data_processor import ThrottledProgress
+        
+        throttle = ThrottledProgress(None)
+        
+        # Should not raise
+        throttle(0.5)
+        throttle(1.0)
+    
+    def test_respects_minimum_progress_delta(self):
+        """Test that calls are throttled based on progress delta."""
+        from data_processor import ThrottledProgress
+        import time
+        
+        calls = []
+        throttle = ThrottledProgress(lambda p: calls.append(p), min_interval=0.01)
+        
+        throttle(0.0)
+        time.sleep(0.02)  # Wait for throttle interval
+        throttle(0.005)  # Small change, should be throttled
+        time.sleep(0.02)
+        throttle(0.5)   # Large change, should be called
+        throttle(1.0)
+        
+        # 0.005 should not be in calls because it's too close to 0.0
+        assert 0.005 not in calls
+        assert 0.5 in calls
+
+
+class TestCopyFileChunked:
+    """Test suite for _copy_file_chunked helper function."""
+    
+    def test_copies_file_correctly(self, tmp_path):
+        """Test that file is copied correctly with chunked reading."""
+        from data_processor import _copy_file_chunked
+        
+        source_file = tmp_path / "source.txt"
+        target_file = tmp_path / "target.txt"
+        content = b"Hello, World! " * 1000  # Large enough content
+        
+        source_file.write_bytes(content)
+        
+        with open(source_file, 'rb') as source:
+            bytes_written = _copy_file_chunked(source, str(target_file))
+        
+        assert bytes_written == len(content)
+        assert target_file.read_bytes() == content
+    
+    def test_handles_empty_file(self, tmp_path):
+        """Test that empty files are handled correctly."""
+        from data_processor import _copy_file_chunked
+        
+        source_file = tmp_path / "empty.txt"
+        target_file = tmp_path / "target.txt"
+        source_file.write_bytes(b"")
+        
+        with open(source_file, 'rb') as source:
+            bytes_written = _copy_file_chunked(source, str(target_file))
+        
+        assert bytes_written == 0
+        assert target_file.exists()
+        assert target_file.read_bytes() == b""
