@@ -16,6 +16,120 @@
 
 ## Improvements Log
 
+### 2026-02-15 - Add pyproject.toml for Modern Python Packaging
+- **Type**: feature
+- **Scope**: `pyproject.toml` (new file)
+- **Impact**: Modern Python packaging standard with centralized tool configurations
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive pyproject.toml configuration file following PEP 517/518 standards, replacing the need for setup.py and consolidating all tool configurations in one place.
+
+**Configuration Features**:
+
+1. **Project Metadata**:
+   - Name: online-data-scientist
+   - Version: 1.0.0
+   - Description: AI-powered data scientist web application
+   - License: MIT
+   - Python requirements: >=3.10,<3.12
+   - Keywords: data-science, ai, streamlit, openai, visualization
+   - Classifiers for PyPI publication
+
+2. **Dependency Management**:
+   - **Runtime**: 13 core dependencies (migrated from requirements.txt)
+     - streamlit, openai, pydantic, pydantic-ai-slim
+     - pandas, polars, pyarrow
+     - geopandas, altair, plotly, folium
+     - requests
+   - **Optional Groups**:
+     - `dev`: black, isort, mypy (code formatting and type checking)
+     - `test`: pytest, pytest-cov, pytest-asyncio (testing framework)
+     - `lint`: pycodestyle, flake8, pylint (code quality)
+     - `all`: includes all optional dependencies
+
+3. **Build System**:
+   - Uses `hatchling` build backend (modern, fast, PEP 517 compliant)
+   - Configured for wheel builds
+   - Project URLs for PyPI (Homepage, Repository, Issues)
+
+4. **Tool Configurations**:
+
+   **pytest** (`[tool.pytest.ini_options]`):
+   - Test discovery in `tests/` directory
+   - Markers: slow, integration, unit
+   - Strict configuration and markers
+   - Verbose output with short tracebacks
+
+   **coverage** (`[tool.coverage.run]` and `[tool.coverage.report]`):
+   - Source: current directory
+   - Omits: tests/, venv/, .opencode/, reproduction/
+   - 2 decimal precision in reports
+   - Shows missing lines
+
+   **black** (`[tool.black]`):
+   - Line length: 120 characters
+   - Target Python: 3.10, 3.11
+   - Excludes: venv, .opencode, reproduction
+
+   **isort** (`[tool.isort]`):
+   - Black-compatible profile
+   - Line length: 120
+   - Multi-line output style 3
+   - Trailing commas
+
+   **mypy** (`[tool.mypy]`):
+   - Python 3.10 target
+   - Warns on return any, unused configs
+   - Checks untyped definitions
+   - Ignores missing imports
+
+   **pycodestyle** (`[tool.pycodestyle]`):
+   - Max line length: 120
+   - Ignores E203, E501 (handled by black), W503
+
+**Benefits**:
+1. **Modern Standard**: PEP 517/518 compliant packaging
+2. **Single Source of Truth**: All configurations in one file
+3. **Tool Integration**: IDEs and CI/CD can read configurations
+4. **Distribution Ready**: Can publish to PyPI
+5. **Developer Experience**: `pip install -e ".[dev,test]"` installs all dev tools
+6. **Backward Compatible**: requirements.txt still works
+7. **CI/CD Optimization**: GitHub Actions can cache based on pyproject.toml hash
+
+**Migration Impact**:
+- No breaking changes to existing code
+- requirements.txt maintained for backward compatibility
+- pytest automatically detects and uses pyproject.toml
+- All existing tests continue to work
+
+**Validation**:
+- TOML syntax validated with Python's tomllib
+- Configuration structure verified
+- pytest successfully detected configfile
+
+**Workflow File**: `pyproject.toml`
+- 157 lines of TOML configuration
+- Follows PEP 517/518 standards
+- Compatible with pip, hatch, and other build tools
+
+**Impact Assessment**:
+- **Developer Experience**: Significantly improved - unified configuration
+- **Code Quality**: Better tool integration (black, isort, mypy configs)
+- **CI/CD Maturity**: Enables modern Python packaging workflows
+- **Risk**: Zero - additive improvement, existing files unchanged
+- **Maintainability**: Single configuration file for all tools
+
+**Confidence Level**: HIGH
+- Standard Python packaging format
+- Validated TOML syntax
+- No dependencies on external services
+- Follows Python best practices
+- pytest successfully loaded configuration
+
+---
+
 ### 2026-02-15 - Add GitHub Actions CI Workflow
 - **Type**: feature
 - **Scope**: `.github/workflows/ci.yaml` (new file)
