@@ -322,4 +322,70 @@ success, error_msg, result = execute_code_securely(
 
 ---
 
+### 2026-02-15 - Add Type Hints to data_processor.py and app.py
+- **Type**: refactoring
+- **Scope**: data_processor.py (3 functions), app.py (4 functions)
+- **Impact**: Improved code quality, IDE support, and maintainability through comprehensive type annotations
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Added comprehensive type hints to improve code clarity, enable better IDE autocomplete/type checking, and serve as inline documentation:
+
+**Changes in data_processor.py**:
+- `detect_separator(filename: str) -> str`: Added parameter and return type hints
+- `get_dataset_info(parquet_files: List[str]) -> str`: Added parameter and return type hints
+- `extract_and_convert(...) -> List[str]`: Added full function signature with types:
+  - `file_obj`: Untyped (handles Streamlit UploadedFile, complex to type)
+  - `filename: str`
+  - `output_dir: str`
+  - `progress_callback: Optional[Callable[[float], None]]`
+  - `chunk_size: int`
+
+**Changes in app.py**:
+- Added imports: `Any, Dict, Union` to existing typing imports
+- `get_file_key(files: Optional[List[Any]]) -> Optional[str]`: Full type annotation
+- `display_result(result: Any) -> None`: Added parameter and return type
+- `settings_page() -> None`: Added return type
+- `home_page() -> None`: Added return type
+
+**Benefits**:
+1. **Better IDE Support**: Autocomplete and type checking in VS Code, PyCharm, etc.
+2. **Code Documentation**: Types serve as inline documentation for developers
+3. **Refactoring Safety**: Type checkers catch type mismatches during refactoring
+4. **Standard Python Practice**: Follows PEP 484 and modern Python best practices
+5. **Non-breaking Change**: Fully backward compatible, no runtime behavior changes
+
+**Before**:
+```python
+def detect_separator(filename):
+    ...
+
+def get_file_key(files):
+    ...
+```
+
+**After**:
+```python
+def detect_separator(filename: str) -> str:
+    ...
+
+def get_file_key(files: Optional[List[Any]]) -> Optional[str]:
+    ...
+```
+
+**Verification**:
+- All modified files pass `python3 -m py_compile` syntax validation
+- No breaking changes to existing functionality
+- Type hints are conservative (using `Any` where Streamlit types are complex)
+- Follows existing code style and conventions
+
+**Confidence Level**: HIGH
+- Syntax validated across all modified files
+- No runtime changes - types are for development only
+- Aligns with PLAN.md goal for type hints
+- Low-risk, high-impact improvement for developer experience
+
+---
+
 *[Next improvement will be added here by OpenCode]*

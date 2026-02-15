@@ -5,6 +5,7 @@ import sys
 import io
 import hashlib
 import logging
+from typing import List, Optional, Any, Dict, Union
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -21,7 +22,6 @@ import data_processor
 import code_executor
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from typing import List, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ class AnalysisResponse(BaseModel):
 # 2️⃣  Helper functions
 # ----------------------------------------------------------------------
 
-def get_file_key(files):
+def get_file_key(files: Optional[List[Any]]) -> Optional[str]:
     """Generates a consistent, safe key for a list of uploaded files."""
     if not files:
         return None
@@ -70,7 +70,7 @@ def get_file_key(files):
         safe_key = hashlib.md5(raw_key.encode()).hexdigest()
     return f"processed_{safe_key}"
 
-def display_result(result):
+def display_result(result: Any) -> None:
     """
     Render the result in the right column.
     Handles DataFrames, Charts, Maps, and text.
@@ -98,7 +98,7 @@ def display_result(result):
     else:
         st.write(result)
 
-def settings_page():
+def settings_page() -> None:
     st.header("Settings")
 
     # Partition Size
@@ -158,7 +158,7 @@ if "llm_model" not in st.session_state:
 if "temperature" not in st.session_state:
     st.session_state.temperature = 0.0
 
-def home_page():
+def home_page() -> None:
     # Progress bar container in the header
     progress_bar_placeholder = st.empty()
 

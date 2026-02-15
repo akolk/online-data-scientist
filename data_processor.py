@@ -5,11 +5,12 @@ import shutil
 import polars as pl
 import time
 import logging
+from typing import List, Optional, Callable
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-def detect_separator(filename):
+def detect_separator(filename: str) -> str:
     with open(filename, 'rb') as f:
         # Read the first few lines to detect separator
         sample = f.read(2048)
@@ -23,7 +24,7 @@ def detect_separator(filename):
             return ';'
         return ','
 
-def get_dataset_info(parquet_files):
+def get_dataset_info(parquet_files: List[str]) -> str:
     """
     Returns metadata about the dataset (schema, row count estimate from first file).
     Assumes all parquet files belong to the same dataset or at least shares the schema of the first one.
@@ -41,7 +42,13 @@ def get_dataset_info(parquet_files):
     except Exception as e:
         return f"Error reading schema: {e}"
 
-def extract_and_convert(file_obj, filename, output_dir, progress_callback=None, chunk_size=500000):
+def extract_and_convert(
+    file_obj,
+    filename: str,
+    output_dir: str,
+    progress_callback: Optional[Callable[[float], None]] = None,
+    chunk_size: int = 500000
+) -> List[str]:
     """
     Extracts a zip/gzip file and converts it to Parquet in chunks.
 
