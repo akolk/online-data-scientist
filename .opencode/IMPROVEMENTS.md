@@ -16,6 +16,75 @@
 
 ## Improvements Log
 
+### 2026-02-15 - Add GitHub Actions CI Workflow
+- **Type**: feature
+- **Scope**: `.github/workflows/ci.yaml` (new file)
+- **Impact**: Automated testing and quality checks on every push and pull request
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive GitHub Actions CI workflow to automate testing, linting, and Docker build verification. This addresses the gap where 85 tests existed but were not automatically run on code changes.
+
+**Workflow Features**:
+
+1. **Test Matrix Job**: Tests across multiple Python versions (3.10, 3.11)
+   - Installs system dependencies (libgdal-dev, libproj-dev, libgeos-dev)
+   - Uses pip caching to speed up builds
+   - Installs Python dependencies from requirements.txt
+   - Installs pytest, pytest-cov, and pycodestyle
+
+2. **Linting and Quality Checks**:
+   - **pycodestyle**: Validates PEP 8 compliance with max line length of 120
+   - **Syntax Check**: Validates Python syntax for all source files using `py_compile`
+   - Ensures code quality standards are maintained
+
+3. **Test Execution**:
+   - Runs all 85 tests using pytest
+   - Verbose output with short tracebacks for clarity
+   - Generates coverage reports in XML and terminal formats
+   - Coverage reports uploaded to Codecov for tracking
+
+4. **Docker Build Verification**:
+   - Separate job to verify Docker image builds successfully
+   - Uses Docker Buildx for multi-platform support
+   - Leverages GitHub Actions cache for faster subsequent builds
+   - Builds but does not push (build verification only)
+
+**Trigger Conditions**:
+- Push to `main` or `develop` branches
+- Pull requests targeting `main` branch
+
+**Benefits**:
+1. **Immediate Feedback**: Developers get instant feedback on test failures
+2. **Quality Gates**: Prevents merging code that breaks tests or violates style guidelines
+3. **Multi-Version Support**: Ensures compatibility across Python 3.10 and 3.11
+4. **Coverage Tracking**: Coverage reports help maintain and improve test quality
+5. **Docker Integrity**: Ensures container builds remain functional after changes
+6. **No Manual Testing**: Eliminates need for manual test runs before merging
+
+**Workflow File**: `.github/workflows/ci.yaml`
+- 75 lines of YAML configuration
+- Uses official GitHub Actions with pinned versions for security
+- Follows GitHub Actions best practices
+- Non-breaking addition - no changes to existing code
+
+**Impact Assessment**:
+- **Developer Experience**: Significantly improved - automatic quality checks
+- **Code Quality**: Protected from regressions via automated testing
+- **CI/CD Maturity**: Moved from manual testing to automated CI pipeline
+- **Risk**: Zero - additive improvement, no existing functionality changed
+- **Maintainability**: Workflow is self-documenting and easily extendable
+
+**Confidence Level**: HIGH
+- Standard GitHub Actions workflow pattern
+- Uses official actions with semantic versioning
+- No dependencies on external services (except optional Codecov)
+- Can be tested by creating a PR after commit
+- Follows security best practices (pinned action versions)
+
+---
+
 ### 2026-02-10 - Initial Analysis
 - **Type**: analysis
 - **Scope**: entire codebase

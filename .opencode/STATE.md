@@ -2,6 +2,90 @@
 
 **Last Updated**: 2026-02-15
 **Current Branch**: develop
+**Status**: Added GitHub Actions CI workflow to automatically run tests on push and pull requests
+
+## Codebase Analysis
+
+### Project Type
+Streamlit-based web application that provides an AI-powered "Online Data Scientist" interface. Uses OpenAI GPT models via Pydantic AI to process natural language queries and execute Python code for data analysis.
+
+### Architecture Overview
+- **Frontend**: Streamlit web interface with dual-pane layout (chat + analysis)
+- **AI Integration**: Pydantic AI Agent with OpenAI models
+- **Data Processing**: Polars for efficient data manipulation, supports CSV/ZIP/GZIP
+- **Visualization**: Plotly, Altair, Folium for charts and maps
+- **CI/CD**: GitHub Actions workflows for testing and Docker publishing
+- **File Structure**:
+  - `app.py`: Main application (410 lines) - PEP 8 compliant
+  - `data_processor.py`: File extraction and Parquet conversion (179 lines) - PEP 8 compliant
+  - `code_executor.py`: Secure code execution with sandbox (477 lines) - PEP 8 compliant
+  - `pages/Settings.py`: Settings page (85 lines) - PEP 8 compliant
+  - `.github/workflows/ci.yaml`: CI workflow for automated testing
+  - `.github/workflows/docker-publish.yaml`: Docker image publishing
+
+### Current Metrics
+- Test Coverage: 85 tests total (data_processor.py: 19, app.py: 11, code_executor.py: 47, Settings.py: 8)
+- Code Quality: All PEP 8 issues resolved, 100% style compliance
+- Dependencies: 14 packages listed, properly pinned with version constraints
+- Documentation: README fully updated
+- CI/CD: Automated testing on Python 3.10 and 3.11, linting with pycodestyle, Docker build verification
+
+### Recent Changes
+- **2026-02-15**: Added GitHub Actions CI workflow (ci.yaml) for automated testing on push/PR
+- **2026-02-15**: Fixed all PEP 8 style issues across codebase (whitespace, blank lines, line length, indentation)
+- **2026-02-15**: Added input validation functions to Settings.py (validate_model_format, validate_partition_size)
+- **2026-02-15**: Created test_settings.py with 8 comprehensive tests for Settings page
+- **2026-02-15**: Updated README.md to reflect current file-upload based architecture
+- **2026-02-13**: Fixed critical indentation bug in app.py
+
+### Known Issues
+All high and medium priority issues resolved. Codebase is now PEP 8 compliant.
+
+### Improvement Opportunities
+
+1. **High Priority**: ✅ All resolved
+2. **Medium Priority**: ✅ All resolved
+3. **Low Priority**:
+   - ✅ Code style consistency (PEP 8) - **COMPLETED 2026-02-15**
+   - ✅ Type hints throughout (completed)
+   - ✅ Documentation improvements (completed)
+   - ✅ CI/CD automation (completed)
+
+## Next Action
+Completed (2026-02-15): Created GitHub Actions CI workflow to automate testing and quality checks:
+
+**Changes Made**:
+- Created `.github/workflows/ci.yaml` with comprehensive CI pipeline:
+  - **Test Job**: Runs on Python 3.10 and 3.11
+    - Installs system dependencies (GDAL, PROJ, GEOS)
+    - Caches pip packages for faster builds
+    - Runs pycodestyle linting (max line length 120)
+    - Validates Python syntax for all source files
+    - Runs all 85 tests with pytest
+    - Generates coverage reports
+    - Uploads coverage to Codecov
+  - **Docker Build Job**: Verifies Docker image builds successfully
+    - Uses Docker Buildx for multi-platform support
+    - Leverages GitHub Actions cache for faster builds
+
+**Impact**:
+- **Quality Assurance**: Tests run automatically on every push and pull request
+- **Multi-Python Support**: Ensures compatibility with Python 3.10 and 3.11
+- **Code Quality**: Automated linting prevents style regressions
+- **Developer Confidence**: Immediate feedback on code changes
+- **Coverage Tracking**: Coverage reports help maintain test quality
+- **Docker Verification**: Ensures container builds remain functional
+
+**Confidence Level**: HIGH
+- Standard GitHub Actions workflow following best practices
+- No breaking changes to existing functionality
+- Workflow follows established patterns from docker-publish.yaml
+- All steps use official GitHub Actions with pinned versions
+
+---
+
+### 2026-02-15 20:00:00 UTC
+
 **Status**: Fixed PEP 8 style compliance across all source files (app.py, code_executor.py, data_processor.py, pages/Settings.py)
 
 ## Codebase Analysis
