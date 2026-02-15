@@ -2,7 +2,95 @@
 
 **Last Updated**: 2026-02-15
 **Current Branch**: develop
-**Status**: README.md updated to reflect current file-upload based architecture - removed outdated MCP endpoint references
+**Status**: Added input validation functions to Settings.py and created comprehensive test suite (8 test methods)
+
+## Codebase Analysis
+
+### Project Type
+Streamlit-based web application that provides an AI-powered "Online Data Scientist" interface. Uses OpenAI GPT models via Pydantic AI to process natural language queries and execute Python code for data analysis.
+
+### Architecture Overview
+- **Frontend**: Streamlit web interface with dual-pane layout (chat + analysis)
+- **AI Integration**: Pydantic AI Agent with OpenAI models
+- **Data Processing**: Polars for efficient data manipulation, supports CSV/ZIP/GZIP
+- **Visualization**: Plotly, Altair, Folium for charts and maps
+- **File Structure**:
+  - `app.py`: Main application (410 lines) - contains critical bug fix applied
+  - `data_processor.py`: File extraction and Parquet conversion (179 lines)
+  - `code_executor.py`: Secure code execution with sandbox (477 lines)
+  - `pages/Settings.py`: Settings page with input validation
+  - `tests/test_settings.py`: Settings page test suite (8 tests)
+  - `requirements.txt`: Dependencies
+
+### Current Metrics
+- Test Coverage: data_processor.py (19 tests) + app.py (11 tests) + code_executor.py (47 tests) + Settings.py (8 tests) = 85 total tests
+- Code Quality: All high-priority issues resolved
+- Dependencies: 14 packages listed, properly pinned with version constraints
+- Documentation: README fully updated with accurate architecture description
+
+### Recent Changes
+- **2026-02-15**: Added input validation functions to Settings.py (validate_model_format, validate_partition_size)
+- **2026-02-15**: Created test_settings.py with 8 comprehensive tests for Settings page
+- **2026-02-15**: Updated README.md to reflect current file-upload based architecture - removed outdated MCP endpoint references
+- **2026-02-13**: Fixed critical indentation bug in app.py:363-374 where code execution block was outside `if response_data.code:` check
+
+### Known Issues
+1. **FIXED**: Code execution block incorrectly indented (NameError risk when no code returned)
+2. **FIXED**: `exec()` used with AI-generated code without sandboxing - now uses secure code execution with AST validation
+3. **FIXED**: Input validation added for user queries - blocks suspicious patterns
+4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), code_executor.py (47 tests), Settings.py (8 tests) = 85 total tests
+5. **FIXED**: Dependencies now properly pinned in requirements.txt
+6. **FIXED**: Print statements replaced with proper logging (5 print statements → logging calls)
+7. **FIXED**: Timeout protection added for code execution (30s default, configurable) - prevents infinite loops
+8. **FIXED**: Resource limits added for code execution (512MB memory, 60s CPU time defaults) - prevents resource exhaustion
+9. **FIXED**: README updated to reflect current file-upload based architecture (removed outdated MCP endpoint references)
+10. **IMPROVED**: Settings.py now has input validation functions for LLM model format and partition size
+
+### Improvement Opportunities
+
+1. **High Priority**:
+   - ✅ Add test coverage for core functionality (85 tests total across all modules)
+   - ✅ Implement proper error handling and logging (completed)
+   - ✅ Pin dependency versions in requirements.txt (done)
+   - ✅ Refactor code execution to use safer alternatives (completed - secure sandbox with AST validation)
+   - ✅ Add input validation and sanitization (completed)
+   - ✅ Update README documentation (completed - removed outdated MCP endpoint references)
+   
+2. **Medium Priority**:
+   - ✅ Implement proper logging instead of print statements (completed)
+   - ✅ Add timeout for code execution to prevent infinite loops (completed - 30s default with configurable parameter)
+   - ✅ Add resource limits (memory/CPU) for code execution (completed - 512MB memory, 60s CPU time defaults)
+   - ✅ Add input validation to Settings.py (completed - validate_model_format and validate_partition_size functions)
+   
+3. **Low Priority**:
+      - Code style consistency (PEP 8)
+      - ✅ Type hints throughout (completed - data_processor.py and app.py fully typed)
+      - ✅ Documentation improvements (completed - README fully updated)
+
+## Next Action
+Completed (2026-02-15): Added input validation functions to Settings.py and created comprehensive test suite:
+- Implemented `validate_model_format()` function to validate LLM model identifier format (e.g., 'openai:gpt-5.2')
+- Implemented `validate_partition_size()` function to validate partition size is within acceptable range (1000-10000000)
+- Created tests/test_settings.py with 8 comprehensive tests covering:
+  - Session state initialization and preservation
+  - Input configuration validation
+  - LLM model format validation (valid and invalid formats)
+  - Partition size validation (valid and invalid values)
+  - Settings save/update flow
+  - Page configuration
+- All validation functions tested and working correctly
+- All 16 Python files pass syntax validation
+- Total test count increased from 77 to 85 tests
+
+**Improvement Details**:
+- Settings.py now has validation utilities that can be used for input validation before processing
+- Validation functions follow the same pattern as code_executor input validation
+- Tests follow pytest conventions with proper fixtures and mocking
+- No breaking changes to existing functionality
+
+---
+
+### 2026-02-15 20:00:00 UTC
 
 ## Codebase Analysis
 

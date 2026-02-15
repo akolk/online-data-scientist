@@ -1,8 +1,47 @@
 import streamlit as st
+import re
 
 st.set_page_config(page_title="Settings - Online Data Scientist", layout="wide")
 
 st.header("Settings")
+
+
+def validate_model_format(model: str) -> bool:
+    """
+    Validate LLM model format (e.g., 'provider:model-name').
+    
+    Args:
+        model: The model identifier string to validate
+        
+    Returns:
+        True if format is valid, False otherwise
+    """
+    if not model or not isinstance(model, str):
+        return False
+    
+    # Pattern: provider:model-name
+    # Both provider and model-name must be non-empty
+    pattern = r'^[a-zA-Z0-9_-]+:[a-zA-Z0-9_.-]+$'
+    return bool(re.match(pattern, model))
+
+
+def validate_partition_size(size: int) -> bool:
+    """
+    Validate partition size is within acceptable range.
+    
+    Args:
+        size: The partition size in rows
+        
+    Returns:
+        True if size is valid, False otherwise
+    """
+    if not isinstance(size, (int, float)):
+        return False
+    
+    min_size = 1000
+    max_size = 10000000
+    
+    return min_size <= size <= max_size
 
 # Initialize session state if not present (although app.py usually runs first, direct navigation is possible)
 if "partition_size" not in st.session_state:
