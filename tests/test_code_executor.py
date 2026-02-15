@@ -460,5 +460,49 @@ result = "completed"
         assert result == 4950
 
 
+class TestResourceLimits:
+    """Test cases for resource limit functionality."""
+    
+    def test_resource_usage_returns_dict(self):
+        """Test that get_resource_usage returns a dictionary."""
+        usage = code_executor.get_resource_usage()
+        
+        assert isinstance(usage, dict)
+        assert 'memory_mb' in usage
+        assert 'cpu_time_seconds' in usage
+        assert isinstance(usage['memory_mb'], float)
+        assert isinstance(usage['cpu_time_seconds'], float)
+    
+    def test_resource_usage_values_non_negative(self):
+        """Test that resource usage values are non-negative."""
+        usage = code_executor.get_resource_usage()
+        
+        assert usage['memory_mb'] >= 0
+        assert usage['cpu_time_seconds'] >= 0
+    
+    def test_set_resource_limits_returns_tuple(self):
+        """Test that set_resource_limits returns a tuple."""
+        result = code_executor.set_resource_limits(
+            max_memory_mb=256,
+            max_cpu_time_seconds=30
+        )
+        
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert isinstance(result[0], bool)
+    
+    def test_default_resource_limits_exist(self):
+        """Test that default resource limit constants are defined."""
+        assert hasattr(code_executor, 'DEFAULT_MEMORY_LIMIT_MB')
+        assert hasattr(code_executor, 'DEFAULT_CPU_TIME_LIMIT_SECONDS')
+        assert code_executor.DEFAULT_MEMORY_LIMIT_MB > 0
+        assert code_executor.DEFAULT_CPU_TIME_LIMIT_SECONDS > 0
+    
+    def test_resource_available_constant_exists(self):
+        """Test that RESOURCE_AVAILABLE constant is defined."""
+        assert hasattr(code_executor, 'RESOURCE_AVAILABLE')
+        assert isinstance(code_executor.RESOURCE_AVAILABLE, bool)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

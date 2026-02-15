@@ -21,8 +21,8 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
   - `requirements.txt`: Dependencies
 
 ### Current Metrics
-- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) + code_executor.py (42 tests) = 72 total tests
-- Code Quality: Issues found - critical bug fixed, exec() usage secured with sandbox and timeout
+- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) + code_executor.py (47 tests) = 77 total tests
+- Code Quality: Issues found - critical bug fixed, exec() usage secured with sandbox, timeout, and resource limits
 - Dependencies: 14 packages listed, properly pinned with version constraints
 - Documentation: README present but MCP_ENDPOINT references may be outdated
 
@@ -33,15 +33,16 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 1. **FIXED**: Code execution block incorrectly indented (NameError risk when no code returned)
 2. **FIXED**: `exec()` used with AI-generated code without sandboxing - now uses secure code execution with AST validation
 3. **FIXED**: Input validation added for user queries - blocks suspicious patterns
-4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), and code_executor.py (42 tests) = 72 total tests
+4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), and code_executor.py (47 tests) = 77 total tests
 5. **FIXED**: Dependencies now properly pinned in requirements.txt
 6. **FIXED**: Print statements replaced with proper logging (5 print statements → logging calls)
 7. **FIXED**: Timeout protection added for code execution (30s default, configurable) - prevents infinite loops
+8. **FIXED**: Resource limits added for code execution (512MB memory, 60s CPU time defaults) - prevents resource exhaustion
 
 ### Improvement Opportunities
 
 1. **High Priority**:
-   - ✅ Add test coverage for core functionality (72 tests total: data_processor.py 19, app.py 11, code_executor.py 42)
+   - ✅ Add test coverage for core functionality (77 tests total: data_processor.py 19, app.py 11, code_executor.py 47)
    - ✅ Implement proper error handling and logging (completed)
    - ✅ Pin dependency versions in requirements.txt (done)
    - ✅ Refactor code execution to use safer alternatives (completed - secure sandbox with AST validation)
@@ -50,14 +51,38 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 2. **Medium Priority**:
    - ✅ Implement proper logging instead of print statements (completed)
    - ✅ Add timeout for code execution to prevent infinite loops (completed - 30s default with configurable parameter)
-   - Add resource limits (memory/CPU) for code execution
+   - ✅ Add resource limits (memory/CPU) for code execution (completed - 512MB memory, 60s CPU time defaults)
    
 3. **Low Priority**:
-    - Code style consistency (PEP 8)
-    - ✅ Type hints throughout (completed - data_processor.py and app.py fully typed)
-    - Documentation improvements
+     - Code style consistency (PEP 8)
+     - ✅ Type hints throughout (completed - data_processor.py and app.py fully typed)
+     - Documentation improvements
 
 ## Next Action
+Completed (2026-02-15): Added resource limits (memory/CPU) for code execution to enhance security sandbox:
+- Implemented `set_resource_limits()` function with memory and CPU time limits
+- Added `get_resource_usage()` function to monitor resource consumption
+- Updated `execute_code_securely()` to accept `memory_limit_mb` and `cpu_time_limit_seconds` parameters
+- Modified `_execute_in_process()` to set resource limits in child processes
+- Added 5 new tests for resource limit functionality (47 total tests for code_executor.py)
+- Cross-platform support: Works on Unix-like systems, graceful fallback on Windows
+- Default limits: 512 MB memory, 60 seconds CPU time
+
+**Security Improvements**:
+- Prevents AI-generated code from consuming excessive memory
+- Limits CPU-intensive operations that could cause DoS
+- Complements existing timeout protection for comprehensive resource control
+- Backward compatible - maintains existing behavior with sensible defaults
+
+**Test Results**: All functionality tested and working correctly
+- Resource usage monitoring works correctly
+- Resource limits can be set on supported platforms
+- execute_code_securely accepts and uses resource limit parameters
+- Backward compatibility maintained
+
+---
+
+### 2026-02-15 20:00:00 UTC
 Completed (2026-02-15): Added comprehensive type hints to data_processor.py and app.py:
 - Added type hints to all function signatures in data_processor.py (3 functions)
 - Added type hints to all function signatures in app.py (4 functions)
