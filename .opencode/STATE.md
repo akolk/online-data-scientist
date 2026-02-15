@@ -2,7 +2,89 @@
 
 **Last Updated**: 2026-02-15
 **Current Branch**: develop
-**Status**: Type hints added to data_processor.py and app.py - code quality improved
+**Status**: README.md updated to reflect current file-upload based architecture - removed outdated MCP endpoint references
+
+## Codebase Analysis
+
+### Project Type
+Streamlit-based web application that provides an AI-powered "Online Data Scientist" interface. Uses OpenAI GPT models via Pydantic AI to process natural language queries and execute Python code for data analysis.
+
+### Architecture Overview
+- **Frontend**: Streamlit web interface with dual-pane layout (chat + analysis)
+- **AI Integration**: Pydantic AI Agent with OpenAI models
+- **Data Processing**: Polars for efficient data manipulation, supports CSV/ZIP/GZIP
+- **Visualization**: Plotly, Altair, Folium for charts and maps
+- **File Structure**:
+  - `app.py`: Main application (410 lines) - contains critical bug fix applied
+  - `data_processor.py`: File extraction and Parquet conversion (179 lines)
+  - `code_executor.py`: Secure code execution with sandbox (477 lines)
+  - `pages/Settings.py`: Settings page
+  - `requirements.txt`: Dependencies
+
+### Current Metrics
+- Test Coverage: data_processor.py (19 tests) + app.py helper functions (11 tests) + code_executor.py (47 tests) = 77 total tests
+- Code Quality: All high-priority issues resolved
+- Dependencies: 14 packages listed, properly pinned with version constraints
+- Documentation: README fully updated with accurate architecture description
+
+### Recent Changes
+- **2026-02-15**: Updated README.md to reflect current file-upload based architecture, removed outdated MCP endpoint references
+- **2026-02-13**: Fixed critical indentation bug in app.py:363-374 where code execution block was outside `if response_data.code:` check
+
+### Known Issues
+1. **FIXED**: Code execution block incorrectly indented (NameError risk when no code returned)
+2. **FIXED**: `exec()` used with AI-generated code without sandboxing - now uses secure code execution with AST validation
+3. **FIXED**: Input validation added for user queries - blocks suspicious patterns
+4. **IMPROVED**: Test coverage added for data_processor.py (19 tests), app.py (11 tests), and code_executor.py (47 tests) = 77 total tests
+5. **FIXED**: Dependencies now properly pinned in requirements.txt
+6. **FIXED**: Print statements replaced with proper logging (5 print statements → logging calls)
+7. **FIXED**: Timeout protection added for code execution (30s default, configurable) - prevents infinite loops
+8. **FIXED**: Resource limits added for code execution (512MB memory, 60s CPU time defaults) - prevents resource exhaustion
+9. **FIXED**: README updated to reflect current file-upload based architecture (removed outdated MCP endpoint references)
+
+### Improvement Opportunities
+
+1. **High Priority**:
+   - ✅ Add test coverage for core functionality (77 tests total: data_processor.py 19, app.py 11, code_executor.py 47)
+   - ✅ Implement proper error handling and logging (completed)
+   - ✅ Pin dependency versions in requirements.txt (done)
+   - ✅ Refactor code execution to use safer alternatives (completed - secure sandbox with AST validation)
+   - ✅ Add input validation and sanitization (completed)
+   - ✅ Update README documentation (completed - removed outdated MCP endpoint references)
+   
+2. **Medium Priority**:
+   - ✅ Implement proper logging instead of print statements (completed)
+   - ✅ Add timeout for code execution to prevent infinite loops (completed - 30s default with configurable parameter)
+   - ✅ Add resource limits (memory/CPU) for code execution (completed - 512MB memory, 60s CPU time defaults)
+   
+3. **Low Priority**:
+   - Code style consistency (PEP 8)
+   - ✅ Type hints throughout (completed - data_processor.py and app.py fully typed)
+   - ✅ Documentation improvements (completed - README fully updated)
+
+## Next Action
+Completed (2026-02-15): Updated README.md to accurately reflect the current file-upload based architecture:
+- Removed all references to MCP endpoint (no longer used)
+- Added comprehensive description of file upload functionality (CSV/ZIP/GZIP)
+- Updated features list to include security measures (sandbox, timeout, resource limits)
+- Added architecture diagram showing data flow
+- Updated configuration section (removed MCP_ENDPOINT and MCP_API_KEY)
+- Added supported file formats table
+- Added security features section detailing blocked operations
+- Updated tech stack description
+- Added testing section with test coverage information
+- Added contributing guidelines
+- All files pass syntax validation
+
+**Documentation Improvements**:
+- README now accurately describes the current application architecture
+- Users will no longer be confused by outdated MCP endpoint references
+- Clear documentation of security features for transparency
+- Better onboarding experience for new users and contributors
+
+---
+
+### 2026-02-15 20:00:00 UTC
 
 ## Codebase Analysis
 

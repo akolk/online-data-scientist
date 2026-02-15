@@ -472,4 +472,74 @@ print(f"Memory: {usage['memory_mb']:.2f} MB, CPU: {usage['cpu_time_seconds']:.2f
 
 ---
 
+### 2026-02-15 - Update README Documentation
+- **Type**: docs
+- **Scope**: README.md (complete rewrite)
+- **Impact**: Eliminated outdated MCP endpoint references, accurately documented current file-upload based architecture
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Completely rewrote README.md to accurately reflect the current application architecture and functionality. The previous README described an MCP (Model Context Protocol) endpoint-based data fetching system that no longer exists, which would confuse users trying to set up the application.
+
+**Major Changes**:
+
+1. **Updated Project Description**:
+   - Changed from "fetches data from MCP endpoint" to "upload CSV/ZIP/GZIP files"
+   - Added clear description of file upload and processing workflow
+
+2. **Rewrote Features Section**:
+   - Added file upload support description
+   - Added intelligent data processing features (separator detection, Parquet conversion)
+   - Added comprehensive security features section
+   - Added progress tracking and follow-up suggestions
+
+3. **Updated Prerequisites**:
+   - Removed MCP_ENDPOINT requirement
+   - Simplified to only require OpenAI API key
+
+4. **Rewrote Configuration Section**:
+   - Removed `MCP_ENDPOINT` and `MCP_API_KEY` variables
+   - Added in-app settings description (partition size, model, temperature)
+   - Updated Docker run commands
+
+5. **Added Architecture Diagram**:
+   - Visual representation of data flow
+   - Shows Streamlit UI → File Processing → AI Agent → Secure Executor pipeline
+
+6. **Added Security Features Section**:
+   - Documented all security measures (sandbox, timeout, resource limits)
+   - Listed blocked operations for transparency
+   - Explains AST validation and input sanitization
+
+7. **Added New Sections**:
+   - Supported file formats table
+   - Testing section with coverage information
+   - Contributing guidelines
+   - License and acknowledgments
+
+**Documentation Improvements**:
+- README now provides accurate setup instructions
+- Users won't be confused by non-existent MCP endpoint configuration
+- Security features are transparently documented
+- Better onboarding for new users and contributors
+- Architecture diagram helps developers understand the system
+
+**Before**: README described MCP endpoint-based data fetching that didn't exist
+**After**: README accurately describes file upload-based analysis with security features
+
+**Impact Assessment**:
+- **User Experience**: Significantly improved - no more confusion from outdated docs
+- **Developer Onboarding**: Better understanding of actual architecture
+- **Trust**: Security features documented build user confidence
+- **Risk**: Zero - documentation-only change
+
+**Confidence Level**: HIGH
+- All documentation verified against actual code
+- No functional changes to application
+- Syntax checked and validated
+- Backward compatible - no API changes
+
+---
+
 *[Next improvement will be added here by OpenCode]*
