@@ -35,6 +35,7 @@ if not OPENAI_API_KEY:
     st.error("❌ `OPENAI_API_KEY` is missing. Please set it in your environment.")
     st.stop()
 
+
 class AnalysisResponse(BaseModel):
     answer: str = Field(
         ...,
@@ -58,6 +59,7 @@ class AnalysisResponse(BaseModel):
 # 2️⃣  Helper functions
 # ----------------------------------------------------------------------
 
+
 def get_file_key(files: Optional[List[Any]]) -> Optional[str]:
     """Generates a consistent, safe key for a list of uploaded files."""
     if not files:
@@ -69,6 +71,7 @@ def get_file_key(files: Optional[List[Any]]) -> Optional[str]:
     if len(safe_key) > 200:
         safe_key = hashlib.md5(raw_key.encode()).hexdigest()
     return f"processed_{safe_key}"
+
 
 def display_result(result: Any) -> None:
     """
@@ -84,19 +87,20 @@ def display_result(result: Any) -> None:
     elif isinstance(result, go.Figure):
         st.plotly_chart(result, width="stretch")
     elif isinstance(result, (folium.Map, folium.Figure)):
-         st_folium(result, width=700)
+        st_folium(result, width=700)
     elif isinstance(result, gpd.GeoDataFrame):
         # Simple folium map – show centroids
         if not result.empty and result.geometry.notnull().any():
-             m = folium.Map(location=[result.geometry.y.mean(), result.geometry.x.mean()],
-                            zoom_start=5)
-             for _, row in result.iterrows():
-                 if row.geometry:
-                     folium.GeoJson(row.geometry).add_to(m)
-             st_folium(m, width=700)
+            m = folium.Map(location=[result.geometry.y.mean(), result.geometry.x.mean()],
+                           zoom_start=5)
+            for _, row in result.iterrows():
+                if row.geometry:
+                    folium.GeoJson(row.geometry).add_to(m)
+            st_folium(m, width=700)
         st.dataframe(result)
     else:
         st.write(result)
+
 
 def settings_page() -> None:
     st.header("Settings")
@@ -137,6 +141,8 @@ def settings_page() -> None:
 # ----------------------------------------------------------------------
 # 3️⃣  Streamlit UI
 # ----------------------------------------------------------------------
+
+
 st.set_page_config(page_title="🧠 Online Data Scientist", layout="wide")
 
 # Top Menu Bar
@@ -158,6 +164,7 @@ if "llm_model" not in st.session_state:
 if "temperature" not in st.session_state:
     st.session_state.temperature = 0.0
 
+
 def home_page() -> None:
     # Progress bar container in the header
     progress_bar_placeholder = st.empty()
@@ -165,7 +172,11 @@ def home_page() -> None:
     # Sidebar for file upload
     with st.sidebar:
         st.header("Upload Data")
-        uploaded_files = st.file_uploader("Choose CSV, ZIP or GZIP files", type=["csv", "zip", "gz", "gzip"], accept_multiple_files=True)
+        uploaded_files = st.file_uploader(
+            "Choose CSV, ZIP or GZIP files",
+            type=["csv", "zip", "gz", "gzip"],
+            accept_multiple_files=True
+        )
 
     if uploaded_files:
         # Check if already processed to avoid re-processing on every rerun
@@ -205,7 +216,10 @@ def home_page() -> None:
                     # p is 0.0 to 1.0 for the current file
                     # Global progress = (file_index + p) / total_files
                     global_p = (file_index + p) / total_files
-                    progress_bar.progress(int(global_p * 100), text=f"Processing file {file_index+1}/{total_files}... {int(global_p*100)}%")
+                    progress_bar.progress(
+                        int(global_p * 100),
+                        text=f"Processing file {file_index+1}/{total_files}... {int(global_p*100)}%"
+                    )
                 return update_progress
 
             # Create/Use the persistent directory
@@ -274,7 +288,6 @@ def home_page() -> None:
                 except Exception as e:
                     st.error(f"Failed to load data: {e}")
 
-
     # Two‑column layout: chat | analysis
     col_chat, col_analysis = st.columns([4, 6])
 
@@ -287,20 +300,20 @@ def home_page() -> None:
             content = entry["content"]
 
             if role == "User":
-                 st.markdown(f"**{role}:** {content}")
+                st.markdown(f"**{role}:** {content}")
             elif role == "Assistant":
-                if isinstance(content, dict): # AnalysisResponse serialized or dict
-                     st.markdown(f"**{role}:**")
-                     st.write(content.get("answer", ""))
-                     if content.get("disclaimer"):
-                         st.caption(f"Disclaimer: {content['disclaimer']}")
-                     if content.get("related"):
-                         with st.container(border=True):
-                             st.markdown("Related questions:")
-                             for j, r in enumerate(content["related"]):
-                                 if st.button(r, key=f"related_{i}_{j}", width="stretch"):
-                                     st.session_state["user_chat_input"] = r
-                                     st.rerun()
+                if isinstance(content, dict):  # AnalysisResponse serialized or dict
+                    st.markdown(f"**{role}:**")
+                    st.write(content.get("answer", ""))
+                    if content.get("disclaimer"):
+                        st.caption(f"Disclaimer: {content['disclaimer']}")
+                    if content.get("related"):
+                        with st.container(border=True):
+                            st.markdown("Related questions:")
+                            for j, r in enumerate(content["related"]):
+                                if st.button(r, key=f"related_{i}_{j}", width="stretch"):
+                                    st.session_state["user_chat_input"] = r
+                                    st.rerun()
                 else:
                     st.markdown(f"**{role}:** {content}")
 
@@ -313,7 +326,7 @@ def home_page() -> None:
             if not is_valid:
                 st.error(f"Invalid input: {error_msg}")
                 return
-            
+
             # Save user message
             st.session_state.chat_history.append({"role": "user", "content": user_input})
 
@@ -321,23 +334,29 @@ def home_page() -> None:
             system_prompt = (
                 "You are an assistant that helps data scientists. "
                 "Write Python code to answer the user's questions. "
-                "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), `plotly.express` (as `px`), `plotly.graph_objects` (as `go`), `folium`, and `streamlit` (as `st`). "
+                "You can use `polars` (as `pl`), `pandas` (as `pd`), `geopandas` (as `gpd`), "
+                "`plotly.express` (as `px`), `plotly.graph_objects` (as `go`), `folium`, "
+                "and `streamlit` (as `st`). "
                 "The code will be executed in the main thread. "
-                "All graphs must be created using `plotly` (either `plotly.express` as `px` or `plotly.graph_objects` as `go`). "
+                "All graphs must be created using `plotly` (either `plotly.express` as `px` "
+                "or `plotly.graph_objects` as `go`). "
                 "Always store the result of your analysis in a variable named `result`. "
-                "This `result` variable can be a DataFrame (pandas/polars), a plot, or a string/number. "
-                "Do not use `print()`. Always store the result of your analysis in a variable named `result`. "
-                "When using polars (pl), always enable streaming mode (e.g., `df.collect(streaming=True)`) to keep memory usage low."
+                "This `result` variable can be a DataFrame (pandas/polars), a plot, "
+                "or a string/number. "
+                "Do not use `print()`. Always store the result of your analysis "
+                "in a variable named `result`. "
+                "When using polars (pl), always enable streaming mode "
+                "(e.g., `df.collect(streaming=True)`) to keep memory usage low."
             )
 
             # Check for active uploaded files
             active_dataset_info = ""
             active_parquet_files = []
             if uploaded_files:
-                 fk = get_file_key(uploaded_files)
-                 if fk in st.session_state:
-                     active_dataset_info = st.session_state.get(f"{fk}_info", "")
-                     active_parquet_files = st.session_state.get(fk, [])
+                fk = get_file_key(uploaded_files)
+                if fk in st.session_state:
+                    active_dataset_info = st.session_state.get(f"{fk}_info", "")
+                    active_parquet_files = st.session_state.get(fk, [])
 
             if active_parquet_files:
                 system_prompt += (
@@ -355,8 +374,9 @@ def home_page() -> None:
                     model_settings={'temperature': st.session_state.temperature}
                 )
 
-                # Using run_sync since streamlit runs in a sync loop mainly, and await might be tricky in standard callbacks
-                # or mixed contexts, but st.chat_input triggers rerun.
+                # Using run_sync since streamlit runs in a sync loop mainly,
+                # and await might be tricky in standard callbacks or mixed
+                # contexts, but st.chat_input triggers rerun.
                 result = agent.run_sync(user_input)
                 response_data = result.output
 
@@ -370,13 +390,13 @@ def home_page() -> None:
                     code = response_data.code.strip()
                     # Execute code securely with sandboxing
                     global_variables = {}
-                    
+
                     success, error_msg, result = code_executor.execute_code_securely(
                         code=code,
                         global_variables=global_variables,
                         pl=pl, pd=pd, st=st, gpd=gpd, alt=alt, px=px, go=go, folium=folium
                     )
-                    
+
                     if success:
                         if result is not None:
                             st.session_state.last_run_result = copy.deepcopy(result)
@@ -391,7 +411,6 @@ def home_page() -> None:
             except Exception as e:
                 st.error(f"Error calling assistant: {e}")
 
-
     # ---- Analysis panel ----
     with col_analysis:
         st.header("Analysis")
@@ -402,6 +421,7 @@ def home_page() -> None:
                 st.error(f"Error displaying result: {e}")
         else:
             st.write("Ask a question that requires data and the assistant will fetch & show it here.")
+
 
 if page == "Home":
     home_page()

@@ -10,12 +10,13 @@ from typing import List, Optional, Callable
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 def detect_separator(filename: str) -> str:
     with open(filename, 'rb') as f:
         # Read the first few lines to detect separator
         sample = f.read(2048)
         if not sample:
-            return ',' # Default
+            return ','  # Default
 
         n_commas = sample.count(b',')
         n_semicolons = sample.count(b';')
@@ -23,6 +24,7 @@ def detect_separator(filename: str) -> str:
         if n_semicolons > n_commas:
             return ';'
         return ','
+
 
 def get_dataset_info(parquet_files: List[str]) -> str:
     """
@@ -41,6 +43,7 @@ def get_dataset_info(parquet_files: List[str]) -> str:
         return f"Schema: {schema_str}"
     except Exception as e:
         return f"Error reading schema: {e}"
+
 
 def extract_and_convert(
     file_obj,
@@ -66,7 +69,8 @@ def extract_and_convert(
     extracted_files = []
 
     # 1. Extraction Phase
-    if progress_callback: progress_callback(0.05)
+    if progress_callback:
+        progress_callback(0.05)
 
     try:
         if filename.endswith('.zip'):
@@ -83,7 +87,7 @@ def extract_and_convert(
 
                     with zf.open(info) as source, open(target_path, "wb") as target:
                         while True:
-                            chunk = source.read(1024 * 1024) # 1MB chunks
+                            chunk = source.read(1024 * 1024)  # 1MB chunks
                             if not chunk:
                                 break
                             target.write(chunk)
@@ -108,7 +112,8 @@ def extract_and_convert(
                     if not chunk:
                         break
                     target.write(chunk)
-                    if progress_callback: progress_callback(0.25)
+                    if progress_callback:
+                        progress_callback(0.25)
 
             extracted_files.append(target_path)
 
@@ -128,7 +133,8 @@ def extract_and_convert(
     except Exception as e:
         raise RuntimeError(f"Extraction failed: {e}")
 
-    if progress_callback: progress_callback(0.5)
+    if progress_callback:
+        progress_callback(0.5)
 
     # 2. Conversion Phase
     parquet_files = []
@@ -167,12 +173,14 @@ def extract_and_convert(
                     fraction = 1 - (1 / (1 + batch_idx * 0.1))
                     current_prog = file_start_prog + (file_end_prog - file_start_prog) * fraction
 
-                    if current_prog > 0.99: current_prog = 0.99
+                    if current_prog > 0.99:
+                        current_prog = 0.99
                     progress_callback(current_prog)
 
         except Exception as e:
             logger.error(f"Failed to convert {source_path}: {e}")
 
-    if progress_callback: progress_callback(1.0)
+    if progress_callback:
+        progress_callback(1.0)
 
     return parquet_files
