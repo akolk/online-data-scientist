@@ -1,0 +1,124 @@
+# Pre-commit hooks configuration
+# These hooks run automatically before each commit to ensure code quality
+# Install with: pip install pre-commit && pre-commit install
+# Run manually with: pre-commit run --all-files
+
+repos:
+  # General file quality checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent commits to main/develop branches directly
+      - id: no-commit-to-branch
+        args: ['--branch=main', '--branch=develop']
+      
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+        exclude: '^.\.opencode/.*$'
+      
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
+        exclude: '^.\.opencode/.*$'
+      
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+      
+      # Check for debug statements (print, pdb, etc.)
+      - id: debug-statements
+      
+      # Check YAML syntax
+      - id: check-yaml
+      
+      # Check JSON syntax
+      - id: check-json
+      
+      # Check TOML syntax
+      - id: check-toml
+      
+      # Prevent large files from being committed
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      
+      # Check for case conflicts in filenames
+      - id: check-case-conflict
+      
+      # Check for executables without shebang
+      - id: check-executables-have-shebangs
+      
+      # Check for shebang in non-executable files
+      - id: check-shebang-scripts-are-executable
+
+  # Python code formatting with Black
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: ['--line-length=120']
+        exclude: '^(\.opencode/|reproduction/|venv/)'
+
+  # Python import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=120']
+        exclude: '^(\.opencode/|reproduction/|venv/)'
+
+  # Python linting with flake8
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ['--max-line-length=120', '--extend-ignore=E203,W503']
+        exclude: '^(\.opencode/|reproduction/|venv/|__pycache__/)'
+
+  # Python docstring formatting
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: ['--convention=google', '--add-ignore=D100,D104']
+        exclude: '^(tests/|\.opencode/|reproduction/|venv/)'
+
+  # Local hooks for project-specific checks
+  - repo: local
+    hooks:
+      # Check Python syntax
+      - id: python-syntax-check
+        name: Check Python syntax
+        entry: python -m py_compile
+        language: system
+        files: \.py$
+        exclude: '^(\.opencode/|reproduction/|venv/)'
+      
+      # Run pycodestyle check (matches CI)
+      - id: pycodestyle-check
+        name: Run pycodestyle
+        entry: pycodestyle --max-line-length=120
+        language: system
+        files: \.py$
+        exclude: '^(\.opencode/|reproduction/|venv/|__pycache__/)'
+      
+      # Check for unsafe eval/exec usage
+      - id: no-unsafe-eval
+        name: Check for unsafe eval/exec
+        entry: grep -nE '(eval\s*\(|exec\s*\()' --include='*.py'
+        language: system
+        files: \.py$
+        exclude: '^(tests/|code_executor\.py|\.opencode/|reproduction/|venv/)'
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: ['-ll', '-ii', '-x', 'tests/']
+        exclude: '^(\.opencode/|reproduction/|venv/)'
+
+  # Docker linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: ['--ignore=DL3008', '--ignore=DL3013']

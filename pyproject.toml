@@ -73,8 +73,11 @@ lint = [
     "flake8>=7.0.0",
     "pylint>=3.0.0",
 ]
+precommit = [
+    "pre-commit>=3.6.0",
+]
 all = [
-    "online-data-scientist[dev,test,lint]",
+    "online-data-scientist[dev,test,lint,precommit]",
 ]
 
 [project.urls]

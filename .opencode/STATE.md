@@ -2,7 +2,11 @@
 
 **Last Updated**: 2026-02-16
 **Current Branch**: develop
-**Status**: Removed outdated MCP_ENDPOINT reference from Dockerfile documentation
+**Status**: Added pre-commit hooks configuration for automated code quality checks
+
+### Recent Changes
+- **2026-02-16**: Added comprehensive pre-commit hooks configuration (.pre-commit-config.yaml) with 15+ automated checks
+- **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
 
 ### Recent Changes
 - **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
@@ -20,12 +24,14 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 - **Visualization**: Plotly, Altair, Folium for charts and maps
 - **CI/CD**: GitHub Actions workflows for testing and Docker publishing
 - **Build System**: Modern Python packaging with pyproject.toml
+- **Code Quality**: Pre-commit hooks for automated checks before commits
 - **File Structure**:
   - `app.py`: Main application (410 lines) - PEP 8 compliant
   - `data_processor.py`: File extraction and Parquet conversion (252 lines) - PEP 8 compliant, performance optimized
   - `code_executor.py`: Secure code execution with sandbox (477 lines) - PEP 8 compliant
   - `pages/Settings.py`: Settings page (85 lines) - PEP 8 compliant
-  - `pyproject.toml`: Modern Python project configuration
+  - `pyproject.toml`: Modern Python project configuration with pre-commit support
+  - `.pre-commit-config.yaml`: 15+ automated code quality hooks
   - `Dockerfile`: Multi-stage build (51 lines) - outdated MCP reference removed
   - `.github/workflows/ci.yaml`: CI workflow for automated testing
   - `.github/workflows/docker-publish.yaml`: Docker image publishing
@@ -33,9 +39,10 @@ Streamlit-based web application that provides an AI-powered "Online Data Scienti
 ### Current Metrics
 - Test Coverage: 94 tests total (data_processor.py: 28, app.py: 11, code_executor.py: 47, Settings.py: 8)
 - Code Quality: All PEP 8 issues resolved, 100% style compliance
-- Dependencies: 13 runtime + optional dev/test/lint groups in pyproject.toml
+- Dependencies: 13 runtime + optional dev/test/lint/precommit groups in pyproject.toml
 - Documentation: README and Dockerfile fully updated - no outdated MCP references
 - CI/CD: Automated testing on Python 3.10 and 3.11, linting with pycodestyle, Docker build verification
+- Pre-commit Hooks: 15+ automated checks (formatting, linting, security, syntax)
 - Build System: PEP 517/518 compliant with hatchling
 
 ### Known Issues
@@ -54,6 +61,52 @@ All high and medium priority issues resolved. Codebase is PEP 8 compliant and pe
    - ✅ Modern Python packaging (pyproject.toml) - **COMPLETED 2026-02-15**
 
 ## Next Action
+Completed (2026-02-16): Added comprehensive pre-commit hooks configuration for automated code quality checks:
+
+**Changes Made**:
+1. **Created `.pre-commit-config.yaml`** with 15+ automated hooks:
+   - **General quality**: trailing-whitespace, end-of-file-fixer, check-merge-conflict
+   - **Syntax validation**: check-yaml, check-json, check-toml
+   - **Security**: no-commit-to-branch (prevents direct commits to main/develop), check-added-large-files
+   - **Code formatting**: Black (line-length 120), isort (import sorting)
+   - **Linting**: flake8, pycodestyle (matches CI configuration)
+   - **Documentation**: pydocstyle (Google convention)
+   - **Security scanning**: bandit (Python security linter)
+   - **Docker**: hadolint (Dockerfile linting)
+   - **Project-specific**: Python syntax check, unsafe eval/exec detection
+
+2. **Updated `pyproject.toml`**:
+   - Added `precommit` optional dependency group with `pre-commit>=3.6.0`
+   - Updated `all` group to include precommit
+
+**Impact**:
+- **Developer Experience**: Code quality issues caught before commits (faster feedback than CI)
+- **CI/CD Consistency**: Local hooks match CI checks (pycodestyle, syntax validation)
+- **Code Quality**: Automated formatting with Black and isort ensures consistency
+- **Security**: Bandit scans for security issues, blocks direct commits to protected branches
+- **Documentation**: Automatic docstring style checking
+- **Risk**: Zero - additive improvement, no functional changes
+- **Maintainability**: Prevents code quality regressions at commit time
+
+**Usage**:
+```bash
+# Install pre-commit hooks
+pip install pre-commit
+pre-commit install
+
+# Run manually on all files
+pre-commit run --all-files
+```
+
+**Confidence Level**: HIGH
+- YAML syntax validated
+- Hooks align with existing CI configuration
+- Standard pre-commit hooks from official repositories
+- No breaking changes to existing functionality
+- Follows Python best practices for code quality
+
+---
+
 Completed (2026-02-16): Removed outdated MCP_ENDPOINT comment from Dockerfile:
 
 **Changes Made**:

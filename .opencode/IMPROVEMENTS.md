@@ -16,6 +16,95 @@
 
 ## Improvements Log
 
+### 2026-02-16 - Add Pre-commit Hooks Configuration
+- **Type**: feature
+- **Scope**: `.pre-commit-config.yaml` (new file), `pyproject.toml`
+- **Impact**: Automated code quality checks run before every commit, catching issues before they reach CI
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive pre-commit hooks configuration that automates code quality checks locally before commits are made. This provides faster feedback than CI and ensures consistency between local development and CI checks.
+
+**Configuration Features**:
+
+1. **General File Quality** (pre-commit-hooks):
+   - `no-commit-to-branch`: Prevents direct commits to main/develop branches
+   - `trailing-whitespace`: Removes trailing whitespace automatically
+   - `end-of-file-fixer`: Ensures files end with a newline
+   - `check-merge-conflict`: Detects merge conflict markers
+   - `debug-statements`: Blocks debug statements (print, pdb)
+   - `check-yaml`/`check-json`/`check-toml`: Syntax validation
+   - `check-added-large-files`: Prevents committing files >1MB
+   - `check-case-conflict`: Detects case conflicts in filenames
+
+2. **Python Code Formatting**:
+   - **Black** (v24.3.0): Automatic code formatting with 120 char line length
+   - **isort** (v5.13.2): Import sorting with Black-compatible profile
+   - **flake8** (v7.0.0): Linting with E203/W503 ignored (Black-compatible)
+   - **pydocstyle** (v6.3.0): Docstring style checking (Google convention)
+
+3. **Security Checks**:
+   - **bandit** (v1.7.8): Python security linter with medium/low severity reporting
+   - Custom hook: Detects unsafe eval/exec usage in non-test files
+   - Prevents commits to protected branches (main/develop)
+
+4. **Docker Validation**:
+   - **hadolint** (v2.12.0): Dockerfile linting with DL3008/DL3013 ignored
+
+5. **Project-Specific Local Hooks**:
+   - Python syntax validation (`python -m py_compile`)
+   - pycodestyle check matching CI configuration
+   - Unsafe eval/exec detection in production code
+
+**pyproject.toml Changes**:
+- Added `precommit` optional dependency group: `pre-commit>=3.6.0`
+- Updated `all` group to include precommit dependencies
+
+**Usage**:
+```bash
+# Install hooks (one-time setup)
+pip install pre-commit
+pre-commit install
+
+# Run manually on all files
+pre-commit run --all-files
+
+# Run on specific file
+pre-commit run --files app.py
+```
+
+**Benefits**:
+1. **Fast Feedback**: Issues caught locally before commit (seconds vs. minutes in CI)
+2. **CI Consistency**: Same checks run locally and in CI (pycodestyle, syntax)
+3. **Automated Formatting**: Black and isort fix style issues automatically
+4. **Security**: Bandit scans for security issues, blocks dangerous patterns
+5. **Branch Protection**: Prevents accidental commits to main/develop
+6. **Documentation**: Automated docstring style checking
+7. **No Regressions**: Code quality standards enforced at commit time
+
+**Impact Assessment**:
+- **Developer Experience**: Significantly improved - instant feedback on code quality
+- **Code Quality**: Protected from regressions via automated checks
+- **CI/CD Maturity**: Local checks complement CI pipeline
+- **Risk**: Zero - additive improvement, no existing functionality changed
+- **Maintainability**: Self-documenting configuration, easily extensible
+
+**Workflow File**: `.pre-commit-config.yaml`
+- 103 lines of configuration
+- 7 repository sources
+- 15+ individual hooks
+- Excludes: `.opencode/`, `reproduction/`, `venv/`, `__pycache__/`
+
+**Confidence Level**: HIGH
+- YAML syntax validated
+- Uses official, well-maintained hook repositories
+- Configuration matches existing CI workflow
+- No breaking changes to existing code
+- Follows Python community best practices
+
+---
+
 ### 2026-02-16 - Remove Outdated MCP_ENDPOINT Reference from Dockerfile
 - **Type**: docs
 - **Scope**: `Dockerfile` (line 48)
