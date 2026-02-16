@@ -16,6 +16,96 @@
 
 ## Improvements Log
 
+### 2026-02-16 - Add Makefile for Development Commands
+- **Type**: feature
+- **Scope**: `Makefile` (new file)
+- **Impact**: Provides convenient, self-documenting commands for all development tasks (testing, linting, formatting, setup)
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive Makefile that simplifies the development workflow by providing easy-to-remember commands for all common tasks. This addresses the gap where developers needed to remember complex pip/pytest commands or know which tools to run.
+
+**Command Categories**:
+
+1. **Setup Commands**:
+   - `make install` - Install production dependencies
+   - `make install-dev` - Install all dev dependencies (test, lint, precommit)
+   - `make setup-hooks` - Install and configure pre-commit hooks automatically
+
+2. **Development Commands**:
+   - `make test` - Run all tests with pytest
+   - `make test-cov` - Run tests with coverage reports (terminal + HTML)
+   - `make lint` - Run pycodestyle and flake8 linting
+   - `make format` - Auto-format with Black and isort
+   - `make check-syntax` - Validate Python syntax for all files
+   - `make check-security` - Run Bandit security scanner
+
+3. **Quality Assurance**:
+   - `make check-all` - Run complete pipeline: syntax + lint + test
+   - `make fix` - Auto-fix code style issues
+
+4. **Docker Commands**:
+   - `make docker-build` - Build Docker image
+   - `make docker-run` - Run container locally with OpenAI API key
+
+5. **Maintenance**:
+   - `make clean` - Remove cache files, artifacts, build directories
+   - `make clean-all` - Full cleanup including virtual environments
+
+**Key Features**:
+- **Self-documenting**: `make help` shows all available commands with descriptions
+- **Consistent**: Uses same tools and configuration as CI (pycodestyle, flake8, Black with 120 char lines)
+- **Convenient**: Complex commands like `pip install -e ".[dev,test,lint,precommit]"` become simple `make install-dev`
+- **Integrated**: Works with existing pyproject.toml dependency groups
+- **Pre-commit Setup**: `make setup-hooks` installs pre-commit and configures git hooks
+
+**Usage Examples**:
+```bash
+# New developer onboarding
+make install-dev
+make setup-hooks
+
+# Before committing
+make check-all    # Ensures everything passes
+
+# Fix code style
+make fix
+
+# Run with coverage
+make test-cov
+open htmlcov/index.html  # View coverage report
+```
+
+**Benefits**:
+1. **Reduced Cognitive Load**: No need to remember long command syntax
+2. **Consistency**: All team members use same commands
+3. **Faster Onboarding**: New devs can be productive immediately
+4. **Quality Gates**: `make check-all` prevents committing broken code
+5. **CI Alignment**: Local checks match CI pipeline
+
+**Impact Assessment**:
+- **Developer Experience**: Significantly improved - commands are intuitive and easy to discover
+- **Onboarding Time**: Reduced - new developers can get started with 2 commands
+- **Code Quality**: Protected - quality gates prevent regressions
+- **Risk**: Zero - Makefile is additive, no changes to existing code
+- **Maintainability**: Easy to extend - just add new targets
+
+**Workflow File**: `Makefile`
+- 114 lines of Makefile configuration
+- 12+ command targets
+- Uses standard GNU Make syntax
+- Compatible with Linux, macOS, and Windows (with make installed)
+
+**Confidence Level**: HIGH
+- Makefile syntax is standard and well-tested
+- Commands use existing Python tooling
+- No breaking changes to existing functionality
+- Complements existing development workflow
+- Follows Python community conventions
+
+---
+
 ### 2026-02-16 - Add Pre-commit Hooks Configuration
 - **Type**: feature
 - **Scope**: `.pre-commit-config.yaml` (new file), `pyproject.toml`
