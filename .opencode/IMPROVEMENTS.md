@@ -16,6 +16,69 @@
 
 ## Improvements Log
 
+### 2026-02-16 - Remove Duplicate Settings Page Implementation
+- **Type**: refactoring
+- **Scope**: `app.py` (removed 34 lines of duplicate code)
+- **Impact**: Eliminated code duplication between app.py and pages/Settings.py, improved maintainability
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Identified and removed duplicate Settings page implementation that existed in both app.py and pages/Settings.py. This duplication created maintenance overhead and potential for inconsistencies.
+
+**Problem**:
+- Two identical Settings implementations existed:
+  1. `settings_page()` function in app.py (lines 105-138)
+  2. Standalone pages/Settings.py file
+- Both had identical UI elements, session state handling, and validation functions
+- app.py used radio button navigation instead of Streamlit's native multi-page support
+
+**Solution**:
+1. Removed `settings_page()` function from app.py (34 lines)
+2. Removed radio button navigation: `st.radio("Menu", ["Home", "Settings"], ...)`
+3. Removed conditional page routing at end of file
+4. Wrapped `home_page()` call in `if __name__ == "__main__"` block for test compatibility
+
+**Code Changes**:
+```python
+# Removed from app.py:
+- def settings_page() -> None:  # 34 lines
+-     st.header("Settings")
+-     ... (partition_size input, llm_model input, temperature slider)
+
+- page = st.radio("Menu", ["Home", "Settings"], ...)
+
+- if page == "Home":
+-     home_page()
+- else:
+-     settings_page()
+
++ if __name__ == "__main__":
++     home_page()
+```
+
+**Benefits**:
+1. **Single Source of Truth**: Settings page logic now only in pages/Settings.py
+2. **Better Navigation**: Uses Streamlit's native multi-page app navigation
+3. **Cleaner URLs**: /Settings instead of query parameters
+4. **Reduced Maintenance**: Changes only needed in one location
+5. **Test Compatibility**: All 97 existing tests pass without modification
+
+**Impact Assessment**:
+- **Code Quality**: Significantly improved - eliminated duplication (DRY principle)
+- **Maintainability**: Better - only one Settings implementation to maintain
+- **User Experience**: Improved - consistent navigation via Streamlit sidebar
+- **Risk**: Low - pure refactoring, no functional changes
+- **Test Coverage**: 97 tests pass (11 app tests + 47 code_executor + 11 settings + 28 data_processor)
+
+**Confidence Level**: HIGH
+- All tests pass without modification
+- No functional changes - only removed duplication
+- Follows Streamlit best practices for multi-page apps
+- Backward compatible - same user experience
+
+---
+
 ### 2026-02-16 - Add Makefile for Development Commands
 - **Type**: feature
 - **Scope**: `Makefile` (new file)

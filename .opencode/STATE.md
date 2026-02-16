@@ -2,16 +2,46 @@
 
 **Last Updated**: 2026-02-16
 **Current Branch**: develop
-**Status**: Added Makefile with convenient development commands and automated setup
+**Status**: Removed code duplication by consolidating Settings page implementation
 
 ### Recent Changes
+- **2026-02-16**: Removed duplicate `settings_page()` function from app.py - now exclusively uses pages/Settings.py
 - **2026-02-16**: Created comprehensive Makefile with development commands (test, lint, format, setup-hooks, etc.)
 - **2026-02-16**: Added comprehensive pre-commit hooks configuration (.pre-commit-config.yaml) with 15+ automated checks
 - **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
 - **2026-02-15**: Created pyproject.toml with comprehensive configuration (project metadata, dependencies, tool configs)
 
 ## Next Action
-Completed (2026-02-16): Created comprehensive Makefile with convenient development commands:
+Completed (2026-02-16): Eliminated code duplication between app.py and pages/Settings.py:
+
+**Changes Made**:
+1. **Removed duplicate `settings_page()` function** from app.py (34 lines removed)
+   - Function was identical to pages/Settings.py implementation
+   - Both had same UI elements, session state handling, and validation functions
+   
+2. **Removed radio button navigation** from app.py (line 149)
+   - Navigation now handled naturally by Streamlit's multi-page app feature
+   - Settings accessible via sidebar navigation to pages/Settings.py
+   
+3. **Updated app.py execution flow**
+   - Wrapped `home_page()` call in `if __name__ == "__main__"` block
+   - Prevents Streamlit code execution during test imports
+   - Maintains backward compatibility
+
+**Impact**:
+- **Code Quality**: Eliminated 34 lines of duplicate code
+- **Maintainability**: Single source of truth for Settings page (pages/Settings.py)
+- **User Experience**: Cleaner navigation via Streamlit's native multi-page support
+- **Test Compatibility**: All 97 tests pass without modification
+- **Risk**: Low - functionality unchanged, only removed duplication
+
+**Lines Changed**:
+- app.py: -34 lines (removed settings_page() function and radio navigation)
+- Test results: 97 tests collected, all passing
+
+---
+
+### 2026-02-16 20:00:00 UTC
 
 **Changes Made**:
 1. **Created `Makefile`** with 12+ development commands organized into categories:

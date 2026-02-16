@@ -102,51 +102,12 @@ def display_result(result: Any) -> None:
         st.write(result)
 
 
-def settings_page() -> None:
-    st.header("Settings")
-
-    # Partition Size
-    partition_size = st.number_input(
-        "Parquet Partition Size (rows)",
-        min_value=1000,
-        max_value=10000000,
-        value=st.session_state.partition_size,
-        step=10000,
-        help="Number of rows per chunk when converting CSV/ZIP to Parquet."
-    )
-    st.session_state.partition_size = partition_size
-
-    # LLM Model
-    llm_model = st.text_input(
-        "LLM Model",
-        value=st.session_state.llm_model,
-        help="The model identifier to use (e.g., openai:gpt-5.2)."
-    )
-    st.session_state.llm_model = llm_model
-
-    # Temperature
-    temperature = st.slider(
-        "Temperature",
-        min_value=0.0,
-        max_value=2.0,
-        value=st.session_state.temperature,
-        step=0.1,
-        help="Controls randomness. 0.0 is deterministic, 1.0 is creative."
-    )
-    st.session_state.temperature = temperature
-
-    st.success("Settings saved automatically.")
-
-
 # ----------------------------------------------------------------------
 # 3️⃣  Streamlit UI
 # ----------------------------------------------------------------------
 
 
 st.set_page_config(page_title="🧠 Online Data Scientist", layout="wide")
-
-# Top Menu Bar
-page = st.radio("Menu", ["Home", "Settings"], horizontal=True, label_visibility="collapsed")
 
 # Session state initialization
 if "chat_history" not in st.session_state:
@@ -423,7 +384,6 @@ def home_page() -> None:
             st.write("Ask a question that requires data and the assistant will fetch & show it here.")
 
 
-if page == "Home":
+# Only run home_page() when executed directly by Streamlit, not during import
+if __name__ == "__main__":
     home_page()
-else:
-    settings_page()
