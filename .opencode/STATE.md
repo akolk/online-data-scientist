@@ -1,8 +1,83 @@
 # Current State
 
-**Last Updated**: 2026-02-15
+**Last Updated**: 2026-02-16
 **Current Branch**: develop
-**Status**: Added pyproject.toml configuration file - modern Python packaging with tool configurations
+**Status**: Removed outdated MCP_ENDPOINT reference from Dockerfile documentation
+
+### Recent Changes
+- **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
+- **2026-02-15**: Created pyproject.toml with comprehensive configuration (project metadata, dependencies, tool configs)
+
+## Codebase Analysis
+
+### Project Type
+Streamlit-based web application that provides an AI-powered "Online Data Scientist" interface. Uses OpenAI GPT models via Pydantic AI to process natural language queries and execute Python code for data analysis.
+
+### Architecture Overview
+- **Frontend**: Streamlit web interface with dual-pane layout (chat + analysis)
+- **AI Integration**: Pydantic AI Agent with OpenAI models
+- **Data Processing**: Polars for efficient data manipulation, supports CSV/ZIP/GZIP with performance optimizations
+- **Visualization**: Plotly, Altair, Folium for charts and maps
+- **CI/CD**: GitHub Actions workflows for testing and Docker publishing
+- **Build System**: Modern Python packaging with pyproject.toml
+- **File Structure**:
+  - `app.py`: Main application (410 lines) - PEP 8 compliant
+  - `data_processor.py`: File extraction and Parquet conversion (252 lines) - PEP 8 compliant, performance optimized
+  - `code_executor.py`: Secure code execution with sandbox (477 lines) - PEP 8 compliant
+  - `pages/Settings.py`: Settings page (85 lines) - PEP 8 compliant
+  - `pyproject.toml`: Modern Python project configuration
+  - `Dockerfile`: Multi-stage build (51 lines) - outdated MCP reference removed
+  - `.github/workflows/ci.yaml`: CI workflow for automated testing
+  - `.github/workflows/docker-publish.yaml`: Docker image publishing
+
+### Current Metrics
+- Test Coverage: 94 tests total (data_processor.py: 28, app.py: 11, code_executor.py: 47, Settings.py: 8)
+- Code Quality: All PEP 8 issues resolved, 100% style compliance
+- Dependencies: 13 runtime + optional dev/test/lint groups in pyproject.toml
+- Documentation: README and Dockerfile fully updated - no outdated MCP references
+- CI/CD: Automated testing on Python 3.10 and 3.11, linting with pycodestyle, Docker build verification
+- Build System: PEP 517/518 compliant with hatchling
+
+### Known Issues
+All high and medium priority issues resolved. Codebase is PEP 8 compliant and performance optimized.
+
+### Improvement Opportunities
+
+1. **High Priority**: ✅ All resolved
+2. **Medium Priority**: ✅ All resolved
+3. **Low Priority**:
+   - ✅ Code style consistency (PEP 8) - **COMPLETED 2026-02-15**
+   - ✅ Type hints throughout (completed)
+   - ✅ Documentation improvements (completed) - **COMPLETED 2026-02-16**
+   - ✅ CI/CD automation (completed)
+   - ✅ Performance optimizations (completed) - **COMPLETED 2026-02-15**
+   - ✅ Modern Python packaging (pyproject.toml) - **COMPLETED 2026-02-15**
+
+## Next Action
+Completed (2026-02-16): Removed outdated MCP_ENDPOINT comment from Dockerfile:
+
+**Changes Made**:
+- Removed line 48 from Dockerfile: `# ENV MCP_ENDPOINT=https://api.my-mcp.com/v1`
+- This outdated comment referenced a feature that no longer exists in the application
+- The app now uses direct file uploads instead of MCP endpoints
+- Documentation is now consistent across README.md and Dockerfile
+
+**Impact**:
+- **Developer Experience**: Dockerfile no longer confuses developers with obsolete environment variable references
+- **Documentation Consistency**: All documentation now accurately reflects the current file-upload based architecture
+- **Risk**: Zero - purely documentation removal, no functional changes
+- **Maintainability**: Cleaner, more accurate code comments
+
+**Confidence Level**: HIGH
+- Simple documentation cleanup
+- No code changes or functional impact
+- Follows the same cleanup pattern applied to README.md on 2026-02-15
+
+---
+
+### 2026-02-15 20:00:00 UTC
+
+**Status**: pyproject.toml created - modern Python packaging implemented
 
 ## Codebase Analysis
 

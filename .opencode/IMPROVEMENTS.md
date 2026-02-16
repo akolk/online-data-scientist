@@ -16,6 +16,53 @@
 
 ## Improvements Log
 
+### 2026-02-16 - Remove Outdated MCP_ENDPOINT Reference from Dockerfile
+- **Type**: docs
+- **Scope**: `Dockerfile` (line 48)
+- **Impact**: Eliminated outdated MCP endpoint environment variable comment that no longer exists in the application
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Removed the outdated `# ENV MCP_ENDPOINT=https://api.my-mcp.com/v1` comment from line 48 of the Dockerfile. This comment referenced a feature that was removed from the application architecture - the app now uses direct file uploads instead of MCP (Model Context Protocol) endpoints.
+
+**Context**:
+The README.md was updated on 2026-02-15 to remove all MCP endpoint references, but the Dockerfile still contained this obsolete comment in the environment variables section. This created documentation inconsistency.
+
+**Changes Made**:
+```dockerfile
+# Before:
+# Optional: expose secrets via environment variables or a .streamlit/secrets.toml
+# Example:
+# ENV OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXX
+# ENV MCP_ENDPOINT=https://api.my-mcp.com/v1
+
+# After:
+# Optional: expose secrets via environment variables or a .streamlit/secrets.toml
+# Example:
+# ENV OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXX
+```
+
+**Benefits**:
+1. **Documentation Consistency**: Dockerfile now matches the updated README.md documentation
+2. **Developer Clarity**: New developers won't be confused by references to non-existent features
+3. **Clean Code**: Removed dead documentation that no longer serves a purpose
+4. **Non-Breaking**: Pure documentation removal, zero functional impact
+
+**Impact Assessment**:
+- **Developer Experience**: Improved - no confusion from obsolete references
+- **Code Quality**: Cleaner, more accurate comments
+- **Risk**: Zero - no code or functional changes
+- **Maintainability**: Better alignment between documentation and actual code
+
+**Confidence Level**: HIGH
+- Simple comment removal
+- No code changes or functional impact
+- Follows cleanup pattern from README.md update on 2026-02-15
+- Verified all other MCP references were already removed
+
+---
+
 ### 2026-02-15 - Add pyproject.toml for Modern Python Packaging
 - **Type**: feature
 - **Scope**: `pyproject.toml` (new file)

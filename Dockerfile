@@ -45,7 +45,6 @@ ENV PYTHONUNBUFFERED=1
 # Optional: expose secrets via environment variables or a .streamlit/secrets.toml
 # Example:
 # ENV OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXX
-# ENV MCP_ENDPOINT=https://api.my-mcp.com/v1
 
 # Run the Streamlit app
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
