@@ -15,6 +15,7 @@ import logging
 import streamlit as st
 
 from validators import validate_model_format, validate_partition_size
+from settings_storage import load_settings, save_settings
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -24,16 +25,19 @@ st.set_page_config(page_title="Settings - Online Data Scientist", layout="wide")
 st.header("Settings")
 
 
+# Load persisted settings on page load
+persisted_settings = load_settings()
+
 # Initialize session state if not present (although app.py usually runs first, direct navigation is possible)
 if "partition_size" not in st.session_state:
-    st.session_state.partition_size = 500000
-    logger.debug(f"Initialized partition_size to default: {st.session_state.partition_size}")
+    st.session_state.partition_size = persisted_settings.get("partition_size", 500000)
+    logger.debug(f"Initialized partition_size from storage: {st.session_state.partition_size}")
 if "llm_model" not in st.session_state:
-    st.session_state.llm_model = "openai:gpt-5.2"
-    logger.debug(f"Initialized llm_model to default: {st.session_state.llm_model}")
+    st.session_state.llm_model = persisted_settings.get("llm_model", "openai:gpt-5.2")
+    logger.debug(f"Initialized llm_model from storage: {st.session_state.llm_model}")
 if "temperature" not in st.session_state:
-    st.session_state.temperature = 0.0
-    logger.debug(f"Initialized temperature to default: {st.session_state.temperature}")
+    st.session_state.temperature = persisted_settings.get("temperature", 0.0)
+    logger.debug(f"Initialized temperature from storage: {st.session_state.temperature}")
 
 # Partition Size
 partition_size = st.number_input(
@@ -71,6 +75,17 @@ temperature = st.slider(
 )
 st.session_state.temperature = temperature
 
+# Save settings to persistent storage
+settings_to_save = {
+    "partition_size": st.session_state.partition_size,
+    "llm_model": st.session_state.llm_model,
+    "temperature": st.session_state.temperature,
+}
+if save_settings(settings_to_save):
+    logger.debug(f"Settings persisted to storage: {settings_to_save}")
+else:
+    logger.warning("Failed to persist settings to storage")
+
 # Log settings updates for debugging
 logger.debug(
     f"Settings updated - partition_size: {partition_size}, "
@@ -78,3 +93,17 @@ logger.debug(
 )
 
 st.success("Settings saved automatically.")
+
+# Add reset button
+st.divider()
+if st.button("Reset to Defaults", type="secondary"):
+    from settings_storage import reset_to_defaults
+    if reset_to_defaults():
+        # Update session state with defaults
+        st.session_state.partition_size = 500000
+        st.session_state.llm_model = "openai:gpt-5.2"
+        st.session_state.temperature = 0.0
+        st.success("Settings reset to defaults. Refreshing...")
+        st.rerun()
+    else:
+        st.error("Failed to reset settings.")
