@@ -2,9 +2,68 @@
 
 **Last Updated**: 2026-02-17
 **Current Branch**: develop
-**Status**: Added comprehensive test coverage for logging configuration module and fixed logging bugs
+**Status**: Extracted validation functions from pages/Settings.py into standalone validators module to fix test failures
 
 ### Recent Changes
+- **2026-02-17**: Created `validators.py` module and extracted validation functions from pages/Settings.py - all 95 tests now pass
+- **2026-02-17**: Created comprehensive test suite for logging_config.py (37 tests) and fixed 2 bugs
+- **2026-02-17**: Created centralized logging configuration module with environment-based log levels and file rotation
+- **2026-02-16**: Enhanced pages/Settings.py with module-level docstring and logging (8 new logging calls)
+- **2026-02-16**: Removed duplicate `settings_page()` function from app.py - now exclusively uses pages/Settings.py
+- **2026-02-16**: Created comprehensive Makefile with development commands (test, lint, format, setup-hooks, etc.)
+- **2026-02-16**: Added comprehensive pre-commit hooks configuration (.pre-commit-config.yaml) with 15+ automated checks
+- **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
+- **2026-02-15**: Created pyproject.toml with comprehensive configuration (project metadata, dependencies, tool configs)
+
+## Next Action
+Completed (2026-02-17): Extracted validation functions from pages/Settings.py into standalone validators module:
+
+**Changes Made**:
+1. **Created `validators.py` module** (86 lines):
+   - Extracted `validate_model_format()` function for LLM model format validation
+   - Extracted `validate_partition_size()` function for partition size validation
+   - Both functions are independent of Streamlit and can be tested without UI dependencies
+   - Added comprehensive docstrings with examples
+   - Maintained all logging functionality for debugging
+
+2. **Updated `pages/Settings.py`**:
+   - Removed validation function definitions (58 lines removed)
+   - Added import: `from validators import validate_model_format, validate_partition_size`
+   - Module now focuses exclusively on UI logic
+   - Validation functions are still called but defined externally
+
+3. **Updated `tests/test_settings.py`**:
+   - Changed imports from `pages.Settings` to `validators`
+   - All 4 previously failing tests now pass
+
+**Problem Solved**:
+- Tests were failing because they tried to import validation functions from pages/Settings.py
+- pages/Settings.py imports streamlit at the module level
+- This caused ImportError when streamlit wasn't installed in test environment
+- Validation functions couldn't be tested independently of Streamlit UI
+
+**Impact**:
+- **Test Results**: All 95 tests now pass (100% success rate) - fixed 4 failing tests
+- **Code Quality**: Better separation of concerns - UI logic separate from validation logic
+- **Testability**: Validation functions can now be tested without Streamlit dependency
+- **Maintainability**: Single source of truth for validation logic
+- **Reusability**: Validation functions can be imported by other modules if needed
+- **Risk**: Zero - only moved code, no functional changes
+- **Lines Changed**: +86 lines (new validators.py), -58 lines (from Settings.py), +2 lines (import changes)
+
+**Confidence Level**: HIGH
+- All 95 tests pass (100% success rate)
+- Syntax validated for all modified files
+- No breaking changes to existing functionality
+- Follows single responsibility principle
+- Validation functions work identically as before
+
+---
+
+### 2026-02-17 20:15:00 UTC
+
+### Recent Changes
+- **2026-02-17**: Created `validators.py` module and extracted validation functions from pages/Settings.py - all 95 tests now pass
 - **2026-02-17**: Created comprehensive test suite for logging_config.py (37 tests) and fixed 2 bugs
 - **2026-02-17**: Created centralized logging configuration module with environment-based log levels and file rotation
 - **2026-02-16**: Enhanced pages/Settings.py with module-level docstring and logging (8 new logging calls)

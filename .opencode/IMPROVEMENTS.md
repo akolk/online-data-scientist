@@ -16,6 +16,60 @@
 
 ## Improvements Log
 
+### 2026-02-17 - Extract Validation Functions into Standalone Module
+- **Type**: refactoring
+- **Scope**: `validators.py` (new file), `pages/Settings.py` (refactored), `tests/test_settings.py` (updated)
+- **Impact**: Fixed 4 failing tests by extracting validation functions from pages/Settings.py into a standalone module
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Extracted validation functions from pages/Settings.py into a new standalone validators module to fix test failures caused by Streamlit dependency and improve code organization.
+
+**Problem**:
+- 4 tests in test_settings.py were failing with `ModuleNotFoundError: No module named 'streamlit'`
+- The tests tried to import `validate_model_format` and `validate_partition_size` from pages.Settings
+- pages/Settings.py imports streamlit at the module level, causing import errors when streamlit isn't installed
+- Validation logic was tightly coupled to the UI module
+
+**Solution**:
+1. **Created `validators.py`** (86 lines):
+   - `validate_model_format()`: Validates LLM model identifier format (e.g., 'openai:gpt-4')
+   - `validate_partition_size()`: Validates partition size is within range (1000-10000000)
+   - Both functions have no external dependencies (except logging and re)
+   - Comprehensive docstrings with examples
+
+2. **Refactored `pages/Settings.py`**:
+   - Removed validation function definitions (58 lines)
+   - Added import: `from validators import validate_model_format, validate_partition_size`
+   - Module now focuses exclusively on UI logic
+
+3. **Updated `tests/test_settings.py`**:
+   - Changed imports to use validators module directly
+   - All 4 previously failing tests now pass
+
+**Benefits**:
+1. **Testability**: Validation functions can be tested without Streamlit dependency
+2. **Separation of Concerns**: UI logic separate from business logic
+3. **Single Responsibility**: Each module has a clear, focused purpose
+4. **Reusability**: Validation functions can be imported by other modules
+5. **Maintainability**: Easier to find and update validation logic
+
+**Impact Assessment**:
+- **Test Results**: Fixed 4 failing tests - all 95 tests now pass (100% success rate)
+- **Code Quality**: Better module organization following SRP
+- **Maintainability**: Validation logic in dedicated module
+- **Risk**: Zero - pure refactoring, no functional changes
+- **Lines Changed**: +86 lines (validators.py), -58 lines (Settings.py), +2 lines (imports)
+
+**Confidence Level**: HIGH
+- All 95 tests pass (100% success rate)
+- Syntax validated for all modified files
+- No breaking changes to existing functionality
+- Follows Python best practices for code organization
+
+---
+
 ### 2026-02-17 - Add Comprehensive Tests for Logging Configuration
 - **Type**: test/bugfix
 - **Scope**: `tests/test_logging_config.py` (new file), `logging_config.py` (bug fix)

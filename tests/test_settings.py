@@ -138,18 +138,18 @@ class TestSettingsPage:
 
     def test_validates_llm_model_format(self):
         """Test that LLM model format validation accepts valid formats."""
-        from pages.Settings import validate_model_format
-        
+        from validators import validate_model_format
+
         # Valid formats should pass
         assert validate_model_format("openai:gpt-4") == True
         assert validate_model_format("openai:gpt-5.2") == True
         assert validate_model_format("anthropic:claude-3") == True
         assert validate_model_format("custom:model-name") == True
-        
+
     def test_rejects_invalid_llm_model_format(self):
         """Test that invalid LLM model formats are rejected."""
-        from pages.Settings import validate_model_format
-        
+        from validators import validate_model_format
+
         # Invalid formats should fail
         assert validate_model_format("invalid") == False
         assert validate_model_format("") == False
@@ -159,16 +159,16 @@ class TestSettingsPage:
 
     def test_validates_partition_size_range(self):
         """Test partition size validation accepts valid ranges."""
-        from pages.Settings import validate_partition_size
-        
+        from validators import validate_partition_size
+
         assert validate_partition_size(1000) == True
         assert validate_partition_size(500000) == True
         assert validate_partition_size(10000000) == True
 
     def test_rejects_invalid_partition_size(self):
         """Test that invalid partition sizes are rejected."""
-        from pages.Settings import validate_partition_size
-        
+        from validators import validate_partition_size
+
         assert validate_partition_size(999) == False  # Below minimum
         assert validate_partition_size(10000001) == False  # Above maximum
         assert validate_partition_size(0) == False

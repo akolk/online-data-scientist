@@ -11,9 +11,10 @@ Usage:
 """
 
 import logging
-import re
 
 import streamlit as st
+
+from validators import validate_model_format, validate_partition_size
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -21,62 +22,6 @@ logger = logging.getLogger(__name__)
 st.set_page_config(page_title="Settings - Online Data Scientist", layout="wide")
 
 st.header("Settings")
-
-
-def validate_model_format(model: str) -> bool:
-    """
-    Validate LLM model format (e.g., 'provider:model-name').
-
-    Args:
-        model: The model identifier string to validate
-
-    Returns:
-        True if format is valid, False otherwise
-    """
-    if not model or not isinstance(model, str):
-        logger.debug(f"Model validation failed: invalid type or empty value")
-        return False
-
-    # Pattern: provider:model-name
-    # Both provider and model-name must be non-empty
-    pattern = r'^[a-zA-Z0-9_-]+:[a-zA-Z0-9_.-]+$'
-    is_valid = bool(re.match(pattern, model))
-
-    if not is_valid:
-        logger.warning(f"Invalid LLM model format: '{model}'. Expected format: 'provider:model-name'")
-    else:
-        logger.debug(f"Model format validated successfully: '{model}'")
-
-    return is_valid
-
-
-def validate_partition_size(size: int) -> bool:
-    """
-    Validate partition size is within acceptable range.
-
-    Args:
-        size: The partition size in rows
-
-    Returns:
-        True if size is valid, False otherwise
-    """
-    if not isinstance(size, (int, float)):
-        logger.debug(f"Partition size validation failed: invalid type {type(size)}")
-        return False
-
-    min_size = 1000
-    max_size = 10000000
-
-    is_valid = min_size <= size <= max_size
-
-    if not is_valid:
-        logger.warning(
-            f"Invalid partition size: {size}. Must be between {min_size} and {max_size}"
-        )
-    else:
-        logger.debug(f"Partition size validated successfully: {size}")
-
-    return is_valid
 
 
 # Initialize session state if not present (although app.py usually runs first, direct navigation is possible)
