@@ -1,0 +1,18 @@
+2026-02-17 01:16:46 | WARNING  | code_executor:execute_code_securely:403 | Code validation failed: Import of 'os' is not allowed for security reasons
+2026-02-17 01:16:46 | ERROR    | code_executor:execute_code_securely:437 | Error executing code: ZeroDivisionError: division by zero
+2026-02-17 01:16:46 | ERROR    | code_executor:execute_code_securely:437 | Error executing code: NameError: name 'undefined_variable' is not defined
+2026-02-17 01:16:46 | WARNING  | code_executor:validate_user_input:476 | Suspicious pattern 'eval(' detected in user input
+2026-02-17 01:16:46 | WARNING  | code_executor:validate_user_input:476 | Suspicious pattern 'exec(' detected in user input
+2026-02-17 01:16:46 | WARNING  | code_executor:validate_user_input:476 | Suspicious pattern 'subprocess.' detected in user input
+2026-02-17 01:16:46 | WARNING  | code_executor:validate_user_input:476 | Suspicious pattern 'os.system' detected in user input
+2026-02-17 01:16:46 | WARNING  | code_executor:validate_user_input:476 | Suspicious pattern '__import__' detected in user input
+2026-02-17 01:16:47 | WARNING  | code_executor:execute_code_securely:429 | Code execution timed out after 1 seconds
+2026-02-17 01:16:48 | WARNING  | code_executor:execute_code_securely:429 | Code execution timed out after 1 seconds
+2026-02-17 01:17:54 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:17:54 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:18:28 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:18:28 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:18:49 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:18:49 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:20:15 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-17 01:20:15 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
