@@ -44,7 +44,10 @@ partition_size = st.number_input(
     step=10000,
     help="Number of rows per chunk when converting CSV/ZIP to Parquet."
 )
-st.session_state.partition_size = partition_size
+if validate_partition_size(partition_size):
+    st.session_state.partition_size = partition_size
+else:
+    st.error(f"Partition size must be between 1000 and 10000000 rows.")
 
 # LLM Model
 llm_model = st.text_input(
@@ -52,7 +55,10 @@ llm_model = st.text_input(
     value=st.session_state.llm_model,
     help="The model identifier to use (e.g., openai:gpt-5.2)."
 )
-st.session_state.llm_model = llm_model
+if validate_model_format(llm_model):
+    st.session_state.llm_model = llm_model
+else:
+    st.error("Model format should be 'provider:model-name' (e.g., 'openai:gpt-5.2').")
 
 # Temperature
 temperature = st.slider(

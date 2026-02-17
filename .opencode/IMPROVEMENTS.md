@@ -16,6 +16,74 @@
 
 ## Improvements Log
 
+### 2026-02-17 - Add User-Facing Validation Feedback in Settings Page
+- **Type**: feature
+- **Scope**: `pages/Settings.py`
+- **Impact**: Users now see clear error messages when entering invalid partition size or LLM model format
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Enhanced the Settings page to provide immediate visual feedback when users enter invalid values. Previously, validation functions were called but their return values were ignored, allowing invalid data to be saved to session state without user notification.
+
+**Problem**:
+- Validation functions (`validate_model_format`, `validate_partition_size`) were imported but return values weren't used
+- Users didn't receive visual feedback when entering invalid values
+- Invalid values were silently saved to session state
+- No user-visible error messages for validation failures
+
+**Solution**:
+1. **Updated `pages/Settings.py`**:
+   - Added validation check for partition_size with conditional error display
+   - Added validation check for llm_model with conditional error display
+   - Invalid values are no longer saved to session state
+   - Clear error messages explain the expected format using `st.error()`
+
+**Code Changes**:
+```python
+# Before: Validation not used
+partition_size = st.number_input(...)
+st.session_state.partition_size = partition_size
+
+llm_model = st.text_input(...)
+st.session_state.llm_model = llm_model
+
+# After: Validation with user feedback
+partition_size = st.number_input(...)
+if validate_partition_size(partition_size):
+    st.session_state.partition_size = partition_size
+else:
+    st.error("Partition size must be between 1000 and 10000000 rows.")
+
+llm_model = st.text_input(...)
+if validate_model_format(llm_model):
+    st.session_state.llm_model = llm_model
+else:
+    st.error("Model format should be 'provider:model-name' (e.g., 'openai:gpt-5.2').")
+```
+
+**Benefits**:
+1. **Better UX**: Users immediately see what's wrong when entering invalid data
+2. **Data Integrity**: Invalid values are rejected before being saved
+3. **Clear Guidance**: Error messages explain the expected format
+4. **Consistency**: Validation logic now properly integrated with UI
+
+**Impact Assessment**:
+- **User Experience**: Significantly improved - no more silent failures
+- **Code Quality**: Validation now serves its intended purpose
+- **Risk**: Low - validation was already in place, now just provides feedback
+- **Lines Changed**: +8 lines in pages/Settings.py
+
+**Test Results**: All 131 tests pass (100% success rate)
+
+**Confidence Level**: HIGH
+- All tests pass without modification
+- No breaking changes to existing functionality
+- Follows Streamlit best practices for error display
+- Improves user experience with minimal code changes
+
+---
+
 ### 2026-02-17 - Extract Validation Functions into Standalone Module
 - **Type**: refactoring
 - **Scope**: `validators.py` (new file), `pages/Settings.py` (refactored), `tests/test_settings.py` (updated)

@@ -2,9 +2,10 @@
 
 **Last Updated**: 2026-02-17
 **Current Branch**: develop
-**Status**: Created dedicated test suite for validators.py module with comprehensive coverage
+**Status**: Added user-facing validation feedback in Settings page
 
 ### Recent Changes
+- **2026-02-17**: Enhanced Settings page to show validation errors with st.error() when invalid values are entered
 - **2026-02-17**: Created comprehensive test suite for validators.py module (36 tests, 284 lines)
 - **2026-02-17**: Created `validators.py` module and extracted validation functions from pages/Settings.py - all 95 tests now pass
 - **2026-02-17**: Created comprehensive test suite for logging_config.py (37 tests) and fixed 2 bugs
@@ -17,6 +18,39 @@
 - **2026-02-15**: Created pyproject.toml with comprehensive configuration (project metadata, dependencies, tool configs)
 
 ## Next Action
+Completed (2026-02-17): Added user-facing validation feedback in Settings page:
+
+**Changes Made**:
+1. **Updated `pages/Settings.py`**:
+   - Added validation checks for partition_size using `validate_partition_size()`
+   - Added validation checks for llm_model using `validate_model_format()`
+   - Added `st.error()` calls to display validation errors to users when invalid values are entered
+   - Invalid values are no longer saved to session state
+   - Users now see clear error messages explaining the expected format
+
+**Problem Solved**:
+- Validation functions were imported but return values weren't being used
+- Users didn't receive visual feedback when entering invalid values
+- Invalid values were silently saved to session state
+- No user-visible error messages for validation failures
+
+**Impact**:
+- **User Experience**: Users now see clear error messages when entering invalid values
+- **Data Integrity**: Invalid values are no longer saved to session state
+- **Code Quality**: Validation logic now properly integrated with UI feedback
+- **Risk**: Low - validation was already happening, now just shows feedback
+- **Lines Changed**: +8 lines (added validation checks and error messages)
+
+**Test Results**: All 131 tests pass (100% success rate)
+
+**Confidence Level**: HIGH
+- All tests pass
+- No breaking changes
+- Follows Streamlit patterns for error display
+- Improves user experience without changing functionality
+
+---
+
 Completed (2026-02-17): Created dedicated test suite for validators.py module with comprehensive coverage:
 
 **Changes Made**:
