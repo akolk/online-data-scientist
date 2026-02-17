@@ -22,8 +22,10 @@ import data_processor
 import code_executor
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
+from logging_config import setup_logging
 
-# Configure logging
+# Configure centralized logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------

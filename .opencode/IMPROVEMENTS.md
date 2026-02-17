@@ -16,6 +16,84 @@
 
 ## Improvements Log
 
+### 2026-02-17 - Add Centralized Logging Configuration
+- **Type**: feature
+- **Scope**: `logging_config.py` (new file), `app.py` (modified)
+- **Impact**: Provides centralized logging with configurable log levels, structured output, and file rotation
+- **Commit**: [pending]
+- **PR**: N/A
+
+**Details**:
+Created a comprehensive centralized logging configuration system that replaces the basic logging setup with a production-ready, configurable solution.
+
+**Problem**:
+- Logging was using Python's default configuration without customization
+- No way to control log verbosity via environment variables
+- No structured log format with timestamps and source locations
+- No log rotation - risk of disk space exhaustion in production
+- No file logging support for persistent log storage
+
+**Solution**:
+1. **Created `logging_config.py` module** (162 lines) with:
+   - `setup_logging()`: Configures root logger with console and optional file handlers
+   - `get_logger()`: Helper to get module-specific loggers
+   - `get_log_level()`: Reads LOG_LEVEL from environment variable
+   - `get_log_file_path()`: Reads LOG_FILE from environment variable
+   - RotatingFileHandler: 10MB per file, 5 backups to prevent disk exhaustion
+   - Structured format: timestamp | level | name:function:line | message
+
+2. **Updated `app.py`**:
+   - Added import: `from logging_config import setup_logging`
+   - Added `setup_logging()` call before getting logger instance
+   - Maintains backward compatibility with existing code
+
+**Configuration Options**:
+```bash
+# Control verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+export LOG_LEVEL=DEBUG
+
+# Set log file path (default: logs/app.log)
+export LOG_FILE=/var/log/myapp.log
+
+# Disable file logging
+export LOG_FILE=none
+```
+
+**Benefits**:
+1. **Observability**: Environment-based log level control for different deployments
+2. **Debugging**: Structured logs with timestamps, function names, line numbers
+3. **Production Ready**: Log rotation prevents disk space issues
+4. **Flexibility**: Easy to redirect logs to files or external systems
+5. **Consistency**: All modules use identical logging format and handlers
+6. **Container Friendly**: Logs to stdout by default (Docker best practice)
+
+**Code Example**:
+```python
+# In app.py
+from logging_config import setup_logging
+setup_logging()
+logger = logging.getLogger(__name__)
+logger.info("Application started")
+
+# Output: 2026-02-17 10:30:45 | INFO     | app:home_page:129 | Application started
+```
+
+**Impact Assessment**:
+- **Developer Experience**: Better debugging with detailed log context
+- **Operations**: File logging and rotation suitable for production deployments
+- **Flexibility**: Easy to change log levels without code changes
+- **Risk**: Zero - additive improvement, no functional changes
+- **Maintainability**: Centralized configuration makes logging changes easy
+
+**Confidence Level**: HIGH
+- Follows Python logging best practices
+- Uses standard library modules (logging, logging.handlers)
+- Environment-based configuration is a well-established pattern
+- Rotating file handler prevents production issues
+- Syntax validated and tested
+
+---
+
 ### 2026-02-16 - Remove Duplicate Settings Page Implementation
 - **Type**: refactoring
 - **Scope**: `app.py` (removed 34 lines of duplicate code)

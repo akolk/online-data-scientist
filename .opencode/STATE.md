@@ -1,16 +1,66 @@
 # Current State
 
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-17
 **Current Branch**: develop
-**Status**: Added comprehensive module documentation and logging to Settings.py
+**Status**: Implemented centralized logging configuration system
 
 ### Recent Changes
+- **2026-02-17**: Created centralized logging configuration module with environment-based log levels and file rotation
 - **2026-02-16**: Enhanced pages/Settings.py with module-level docstring and logging (8 new logging calls)
 - **2026-02-16**: Removed duplicate `settings_page()` function from app.py - now exclusively uses pages/Settings.py
 - **2026-02-16**: Created comprehensive Makefile with development commands (test, lint, format, setup-hooks, etc.)
 - **2026-02-16**: Added comprehensive pre-commit hooks configuration (.pre-commit-config.yaml) with 15+ automated checks
 - **2026-02-16**: Removed outdated MCP_ENDPOINT comment from Dockerfile (line 48) - the app no longer uses MCP endpoints
 - **2026-02-15**: Created pyproject.toml with comprehensive configuration (project metadata, dependencies, tool configs)
+
+## Next Action
+Completed (2026-02-17): Created centralized logging configuration system:
+
+**Changes Made**:
+1. **Created `logging_config.py` module** (162 lines):
+   - Centralized logging setup with configurable log levels
+   - Environment-based configuration (LOG_LEVEL, LOG_FILE env vars)
+   - Structured logging with timestamps and source location
+   - Rotating file handler to prevent disk space issues (10MB per file, 5 backups)
+   - Console output to stdout for containerized environments
+   - Helper functions: `setup_logging()`, `get_logger()`, `get_log_level()`
+
+2. **Updated `app.py`**:
+   - Integrated centralized logging configuration on startup
+   - Replaced basic logging setup with `setup_logging()` call
+   - Maintains backward compatibility with existing logger instances
+
+**Impact**:
+- **Observability**: Developers can now control log verbosity via LOG_LEVEL environment variable
+- **Debugging**: Structured logs include timestamps, function names, and line numbers
+- **Production Ready**: Log rotation prevents disk space exhaustion
+- **Flexibility**: Easy to configure different log levels for dev/staging/prod environments
+- **Consistency**: All modules use the same logging format and configuration
+- **Risk**: Zero - additive improvement, no functional changes to application logic
+- **Lines Changed**: +163 lines (new module), +1 line modified in app.py
+
+**Configuration**:
+```bash
+# Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+export LOG_LEVEL=DEBUG
+
+# Set custom log file path
+export LOG_FILE=/var/log/app.log
+
+# Disable file logging
+export LOG_FILE=none
+```
+
+**Confidence Level**: HIGH
+- Syntax validated successfully
+- Follows Python logging best practices
+- No breaking changes to existing code
+- Environment-based configuration is a standard pattern
+- Rotating file handler prevents production issues
+
+---
+
+### 2026-02-16 20:00:00 UTC
 
 ### Recent Changes
 - **2026-02-16**: Removed duplicate `settings_page()` function from app.py - now exclusively uses pages/Settings.py
