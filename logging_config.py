@@ -156,7 +156,7 @@ def setup_logging(
             root_logger.addHandler(file_handler)
         except (IOError, OSError) as e:
             # Log to console if file handler fails
-            console_handler.error(f"Failed to setup file logging to {file_path}: {e}")
+            logging.error(f"Failed to setup file logging to {file_path}: {e}")
     
     # Log configuration details at debug level
     root_logger.debug(
