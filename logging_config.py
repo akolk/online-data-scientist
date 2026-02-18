@@ -48,6 +48,15 @@ DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10MB
 
 DEFAULT_BACKUP_COUNT = 5
 
+# Define public API
+__all__ = [
+    "setup_logging",
+    "get_logger",
+    "get_log_level",
+    "get_log_file_path",
+    "ensure_log_directory",
+]
+
 
 def get_log_level() -> int:
     """Get the log level from environment variable.

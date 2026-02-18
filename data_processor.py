@@ -10,6 +10,13 @@ from functools import lru_cache
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Define public API
+__all__ = [
+    "detect_separator",
+    "get_dataset_info",
+    "extract_and_convert",
+]
+
 # Constants for performance optimization
 CHUNK_SIZE_BYTES = 1024 * 1024  # 1MB chunks for file I/O
 SAMPLE_SIZE_BYTES = 8192  # 8KB sample for separator detection

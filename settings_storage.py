@@ -26,6 +26,19 @@ DEFAULT_SETTINGS = {
 SETTINGS_DIR = Path.home() / ".config" / "online-data-scientist"
 SETTINGS_FILE = SETTINGS_DIR / "settings.json"
 
+# Define public API
+__all__ = [
+    "DEFAULT_SETTINGS",
+    "get_settings_path",
+    "ensure_settings_directory",
+    "load_settings",
+    "save_settings",
+    "get_setting",
+    "update_setting",
+    "reset_to_defaults",
+    "migrate_legacy_settings",
+]
+
 
 def get_settings_path() -> Path:
     """

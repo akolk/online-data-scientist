@@ -14,6 +14,19 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
+# Define public API
+__all__ = [
+    "validate_code",
+    "create_restricted_globals",
+    "execute_code_securely",
+    "validate_user_input",
+    "get_resource_usage",
+    "set_resource_limits",
+    "execution_timeout",
+    "TimeoutException",
+    "ResourceLimitException",
+]
+
 # Default timeout for code execution (in seconds)
 DEFAULT_EXECUTION_TIMEOUT = 30
 

@@ -15,6 +15,12 @@ import re
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Define public API
+__all__ = [
+    "validate_model_format",
+    "validate_partition_size",
+]
+
 
 def validate_model_format(model: str) -> bool:
     """
