@@ -1,22 +1,92 @@
+"""Storage verification utility for testing file persistence logic.
+
+This module provides utilities to test and verify the file storage logic
+used in the main application. It includes mock objects for simulating
+Streamlit file uploads and functions to verify the storage fallback logic.
+
+Usage:
+    Run this module directly to test storage logic:
+    $ python verify_storage.py
+
+    Or import the MockUploadedFile class for use in tests:
+    >>> from verify_storage import MockUploadedFile
+    >>> mock_file = MockUploadedFile("test.csv", 100, b"data")
+"""
 
 import os
 import shutil
 import hashlib
 import re
-from unittest.mock import MagicMock
 import tempfile
 
-# Mock objects to mimic Streamlit file upload
-class MockUploadedFile:
-    def __init__(self, name, size, content):
-        self.name = name
-        self.size = size
-        self.content = content
+__all__ = [
+    "MockUploadedFile",
+    "test_storage_logic",
+]
 
-    def read(self):
+
+class MockUploadedFile:
+    """Mock uploaded file object to mimic Streamlit's UploadedFile.
+
+    This class simulates Streamlit's file upload object for testing
+    purposes without requiring a Streamlit runtime environment.
+
+    Attributes:
+        name: The filename of the uploaded file.
+        size: The size of the file content in bytes.
+        content: The binary content of the file.
+
+    Example:
+        >>> content = b"col1,col2\n1,2\n3,4"
+        >>> file = MockUploadedFile("test.csv", len(content), content)
+        >>> file.name
+        'test.csv'
+        >>> file.read()
+        b'col1,col2\n1,2\n3,4'
+    """
+
+    def __init__(self, name: str, size: int, content: bytes) -> None:
+        """Initialize mock uploaded file.
+
+        Args:
+            name: The filename.
+            size: The size of the content in bytes.
+            content: The binary content of the file.
+        """
+        self.name: str = name
+        self.size: int = size
+        self.content: bytes = content
+
+    def read(self) -> bytes:
+        """Read the file content.
+
+        Returns:
+            The binary content of the file.
+        """
         return self.content
 
-def test_storage_logic():
+
+def test_storage_logic() -> None:
+    """Test the file storage logic and fallback mechanisms.
+
+    This function tests the complete storage logic including:
+    - File key generation from uploaded files
+    - Directory fallback logic (when /data is not available)
+    - File persistence and cleanup
+
+    The test creates a mock uploaded file, generates a storage key,
+    creates the storage directory (with fallback), writes a test file,
+    verifies everything was created correctly, then cleans up.
+
+    Raises:
+        AssertionError: If any verification step fails.
+
+    Example:
+        >>> test_storage_logic()
+        Testing storage logic...
+        Using DATA_DIR: /path/to/data
+        Successfully verified storage at /path/to/data/processed_...
+    """
     print("Testing storage logic...")
 
     # Setup test data
