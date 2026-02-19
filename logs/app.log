@@ -24,3 +24,39 @@
 2026-02-17 03:16:52 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
 2026-02-17 05:15:55 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
 2026-02-17 05:15:55 | DEBUG    | root:setup_logging:162 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:15:44 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:15:44 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:16:15 | WARNING  | validators:validate_model_format:53 | Invalid LLM model format: 'invalid'. Expected format: 'provider:model-name'
+2026-02-19 00:16:15 | WARNING  | validators:validate_model_format:53 | Invalid LLM model format: 'no-colon-here'. Expected format: 'provider:model-name'
+2026-02-19 00:16:15 | WARNING  | validators:validate_model_format:53 | Invalid LLM model format: ':only-provider'. Expected format: 'provider:model-name'
+2026-02-19 00:16:15 | WARNING  | validators:validate_model_format:53 | Invalid LLM model format: 'only-model:'. Expected format: 'provider:model-name'
+2026-02-19 00:16:15 | WARNING  | validators:validate_partition_size:89 | Invalid partition size: 999. Must be between 1000 and 10000000
+2026-02-19 00:16:15 | WARNING  | validators:validate_partition_size:89 | Invalid partition size: 10000001. Must be between 1000 and 10000000
+2026-02-19 00:16:15 | WARNING  | validators:validate_partition_size:89 | Invalid partition size: 0. Must be between 1000 and 10000000
+2026-02-19 00:16:15 | WARNING  | validators:validate_partition_size:89 | Invalid partition size: -100. Must be between 1000 and 10000000
+2026-02-19 00:16:27 | WARNING  | code_executor:execute_code_securely:416 | Code validation failed: Import of 'os' is not allowed for security reasons
+2026-02-19 00:16:27 | ERROR    | code_executor:execute_code_securely:450 | Error executing code: ZeroDivisionError: division by zero
+2026-02-19 00:16:27 | ERROR    | code_executor:execute_code_securely:450 | Error executing code: NameError: name 'undefined_variable' is not defined
+2026-02-19 00:16:27 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'eval(' detected in user input
+2026-02-19 00:16:27 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'exec(' detected in user input
+2026-02-19 00:16:27 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'subprocess.' detected in user input
+2026-02-19 00:16:27 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'os.system' detected in user input
+2026-02-19 00:16:27 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern '__import__' detected in user input
+2026-02-19 00:16:28 | WARNING  | code_executor:execute_code_securely:442 | Code execution timed out after 1 seconds
+2026-02-19 00:16:29 | WARNING  | code_executor:execute_code_securely:442 | Code execution timed out after 1 seconds
+2026-02-19 00:16:29 | WARNING  | data_processor:detect_separator:57 | Could not detect separator for /tmp/pytest-of-opencode/pytest-3/test_handles_nonexistent_file0/does_not_exist.csv: [Errno 2] No such file or directory: '/tmp/pytest-of-opencode/pytest-3/test_handles_nonexistent_file0/does_not_exist.csv'
+2026-02-19 00:16:36 | WARNING  | code_executor:execute_code_securely:416 | Code validation failed: Import of 'os' is not allowed for security reasons
+2026-02-19 00:16:37 | ERROR    | code_executor:execute_code_securely:450 | Error executing code: ZeroDivisionError: division by zero
+2026-02-19 00:16:37 | ERROR    | code_executor:execute_code_securely:450 | Error executing code: NameError: name 'undefined_variable' is not defined
+2026-02-19 00:16:37 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'eval(' detected in user input
+2026-02-19 00:16:37 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'exec(' detected in user input
+2026-02-19 00:16:37 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'subprocess.' detected in user input
+2026-02-19 00:16:37 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern 'os.system' detected in user input
+2026-02-19 00:16:37 | WARNING  | code_executor:validate_user_input:489 | Suspicious pattern '__import__' detected in user input
+2026-02-19 00:16:38 | WARNING  | code_executor:execute_code_securely:442 | Code execution timed out after 1 seconds
+2026-02-19 00:16:39 | WARNING  | code_executor:execute_code_securely:442 | Code execution timed out after 1 seconds
+2026-02-19 00:16:39 | WARNING  | data_processor:detect_separator:57 | Could not detect separator for /tmp/pytest-of-opencode/pytest-4/test_handles_nonexistent_file0/does_not_exist.csv: [Errno 2] No such file or directory: '/tmp/pytest-of-opencode/pytest-4/test_handles_nonexistent_file0/does_not_exist.csv'
+2026-02-19 00:16:51 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:16:51 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:17:51 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
+2026-02-19 00:17:51 | DEBUG    | root:setup_logging:171 | Logging configured: level=DEBUG, file=logs/app.log, format='%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s'
